@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "477357689953",
+    "firebase_url": "https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "schoolfy-706ff",
+    "storage_bucket": "schoolfy-706ff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477357689953:android:cd6e01e525cc4222aeae20",
+        "android_client_info": {
+          "package_name": "com.schoolfy.schoolfyapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
