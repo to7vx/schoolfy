@@ -41,7 +41,6 @@ class _HomePageState extends State<HomePage> {
           }
         }
       } catch (e) {
-        print('Error loading user data: $e');
         if (mounted) {
           setState(() {
             firstName = 'Guardian';
@@ -690,7 +689,6 @@ class _HomePageState extends State<HomePage> {
       // Remove from pending requests on error
       _pendingPickupRequests.remove(studentId);
       
-      print('Error sending pickup request: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -4,7 +4,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/auth/phone_auth_screen.dart';
-import 'screens/main_nav_screen.dart';
+import 'screens/home_page.dart';
+import 'screens/students_page.dart';
+import 'screens/authorized_guardians_page.dart';
+import 'screens/settings_page.dart';
 import 'screens/profile_setup_page.dart';
 
 
@@ -49,13 +52,8 @@ class MyApp extends StatelessWidget {
       },
     );
   }
-
-
-
-
 }
 
-// Placeholder for Welcome/Language Selection screen
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -87,93 +85,6 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
-  }
-}
-
-// AuthGate widget: Shows HomePage if logged in, else WelcomeScreen
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -307,7 +218,7 @@ class AuthGate extends StatelessWidget {
                             };
                           }).toList() ?? [];
                           
-                          return MainNavScreen(students: students);
+                          return _MainNavScreen(students: students);
                         },
                       );
                     },
@@ -330,9 +241,6 @@ class AuthGate extends StatelessWidget {
         throw Exception('Phone number not available');
       }
 
-      print('Starting linking process for phone: $phoneNumber');
-
-      // Check if guardian user document exists
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -347,11 +255,8 @@ class AuthGate extends StatelessWidget {
         final userData = userDoc.data()!;
         guardianId = userData['guardianId'] ?? _generateGuardianId();
         currentLinkedStudents = List<String>.from(userData['linkedStudents'] ?? []);
-        print('Existing guardian found with ID: $guardianId, current linked students: $currentLinkedStudents');
       } else {
-        // Generate new guardian ID for new user
         guardianId = _generateGuardianId();
-        print('Creating new guardian with ID: $guardianId');
       }
 
       // Query students collection for matching guardian phone
@@ -360,7 +265,6 @@ class AuthGate extends StatelessWidget {
           .where('guardianPhone', isEqualTo: phoneNumber)
           .get();
 
-      print('Found ${studentsQuery.docs.length} students matching phone number');
 
       final batch = FirebaseFirestore.instance.batch();
       final newLinkedStudents = List<String>.from(currentLinkedStudents);
@@ -368,25 +272,16 @@ class AuthGate extends StatelessWidget {
       for (final studentDoc in studentsQuery.docs) {
         final studentData = studentDoc.data();
         final studentId = studentDoc.id;
-        final studentName = studentData['name'] ?? 'Unknown';
 
-        print('Processing student: $studentName (ID: $studentId)');
-        print('Current primaryGuardianId: ${studentData['primaryGuardianId']}');
-        print('Current status: ${studentData['status']}');
-
-        // Check if student is already linked to another guardian
         if (studentData['primaryGuardianId'] != null && 
             studentData['primaryGuardianId'] != guardianId) {
-          print('Student $studentName is already linked to another guardian: ${studentData['primaryGuardianId']}');
           continue;
         }
 
         // Link student to guardian
         if (!newLinkedStudents.contains(studentId)) {
           newLinkedStudents.add(studentId);
-          print('Added student $studentName to linked students list');
         } else {
-          print('Student $studentName already in linked students list');
         }
 
         // Update student document
@@ -394,7 +289,6 @@ class AuthGate extends StatelessWidget {
             .collection('students')
             .doc(studentId);
             
-        print('Adding batch update for student: $studentName -> Guardian: $guardianId');
         batch.update(studentRef, {
           'primaryGuardianId': guardianId,
           'status': 'linked',
@@ -428,38 +322,9 @@ class AuthGate extends StatelessWidget {
       }
 
       // Commit all changes
-      print('Committing batch with ${newLinkedStudents.length} students...');
       await batch.commit();
-      print('Batch committed successfully');
-
-      // Verify the changes were applied
-      print('Verifying student updates...');
-      for (final studentDoc in studentsQuery.docs) {
-        final studentId = studentDoc.id;
-        final studentName = studentDoc.data()['name'] ?? 'Unknown';
-        
-        try {
-          final updatedStudent = await FirebaseFirestore.instance
-              .collection('students')
-              .doc(studentId)
-              .get();
-              
-          if (updatedStudent.exists) {
-            final updatedData = updatedStudent.data()!;
-            print('Verified $studentName: primaryGuardianId = ${updatedData['primaryGuardianId']}, status = ${updatedData['status']}');
-          } else {
-            print('ERROR: Student $studentName not found after update');
-          }
-        } catch (e) {
-          print('ERROR verifying student $studentName: $e');
-        }
-      }
-
-      print('Successfully linked ${newLinkedStudents.length} students to guardian $guardianId');
-      print('Final linked students: $newLinkedStudents');
       
     } catch (e) {
-      print('Error linking guardian to students: $e');
       rethrow;
     }
   }
@@ -469,6 +334,44 @@ class AuthGate extends StatelessWidget {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final random = timestamp.toString().substring(timestamp.toString().length - 6);
     return 'GDN_$random';
+  }
+}
+
+class _MainNavScreen extends StatefulWidget {
+  final List<Map<String, dynamic>> students;
+  const _MainNavScreen({required this.students});
+
+  @override
+  State<_MainNavScreen> createState() => _MainNavScreenState();
+}
+
+class _MainNavScreenState extends State<_MainNavScreen> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = [
+      HomePage(students: widget.students),
+      const StudentsPage(),
+      const AuthorizedGuardiansPage(),
+      const SettingsPage(),
+    ];
+
+    return Scaffold(
+      body: pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.deepPurple,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
+          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Guardians'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+      ),
+    );
   }
 }
 

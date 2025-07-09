@@ -80,10 +80,8 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   }
 
   void _setupPickupListener() {
-    print('Setting up pickup listener for today: $_todayKey');
     _database.child('pickupQueue').child(_todayKey).onValue.listen(
       (DatabaseEvent event) {
-        print('Received database event!');
         if (mounted) {
           setState(() {
             _isConnected = true;
@@ -98,7 +96,6 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
             _isConnected = false;
           });
         }
-        print('Firebase connection error: $error');
       },
     );
   }
@@ -107,22 +104,15 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
     final Map<String, List<PickupEntry>> result = {};
     
     // Debug logging
-    print('Processing pickup data...');
-    print('Snapshot exists: ${snapshot.exists}');
-    print('Snapshot value: ${snapshot.value}');
     
     if (snapshot.value != null) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       
-      print('Data entries count: ${data.length}');
       
       for (final entry in data.entries) {
-        print('Processing entry: ${entry.key}');
         final pickupData = Map<String, dynamic>.from(entry.value as Map);
-        print('Pickup data: $pickupData');
         
         final pickup = PickupEntry.fromJson(entry.key, pickupData);
-        print('Created pickup entry: ${pickup.studentName} in ${pickup.grade}');
         
         if (!result.containsKey(pickup.grade)) {
           result[pickup.grade] = [];
@@ -136,7 +126,6 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       }
     }
     
-    print('Final result grades: ${result.keys.toList()}');
     return result;
   }
 
@@ -564,12 +553,10 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
           // Remove entries older than the cleanup duration
           if (now.difference(pickupTime) > _autoCleanupDuration) {
             await todayRef.child(entry.key).remove();
-            print('Auto-cleaned old pickup entry: ${entry.key} (${pickupData['studentName']})');
           }
         }
       }
     } catch (e) {
-      print('Auto-cleanup error: $e');
     }
   }
 }
