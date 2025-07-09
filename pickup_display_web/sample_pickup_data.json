@@ -1,0 +1,46 @@
+{
+  "pickupQueue": {
+    "2025-07-09": {
+      "pickup_001": {
+        "studentId": "stu_001",
+        "studentName": "Sara Ahmed",
+        "grade": "2A",
+        "time": "2025-07-09T13:45:00.000Z",
+        "guardianName": "Fatima Ahmed",
+        "guardianPhone": "+966500000001"
+      },
+      "pickup_002": {
+        "studentId": "stu_002", 
+        "studentName": "Omar Nasser",
+        "grade": "1B",
+        "time": "2025-07-09T13:47:00.000Z",
+        "guardianName": "Mohammed Nasser",
+        "guardianPhone": "+966500000002"
+      },
+      "pickup_003": {
+        "studentId": "stu_003",
+        "studentName": "Layla Al-Mansouri", 
+        "grade": "3A",
+        "time": "2025-07-09T13:50:00.000Z",
+        "guardianName": "Amira Al-Mansouri",
+        "guardianPhone": "+966500000003"
+      },
+      "pickup_004": {
+        "studentId": "stu_004",
+        "studentName": "Khalid bin Rashid",
+        "grade": "2A", 
+        "time": "2025-07-09T13:52:00.000Z",
+        "guardianName": "Abdullah bin Rashid",
+        "guardianPhone": "+966500000004"
+      },
+      "pickup_005": {
+        "studentId": "stu_005",
+        "studentName": "Aisha Al-Zahra",
+        "grade": "1A",
+        "time": "2025-07-09T13:55:00.000Z",
+        "guardianName": "Noura Al-Zahra",
+        "guardianPhone": "+966500000005"
+      }
+    }
+  }
+}

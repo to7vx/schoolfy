@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   final List<Map<String, dynamic>> students;
-  final void Function(Map<String, dynamic>) onPickup;
 
-  const HomePage({super.key, required this.students, required this.onPickup});
+  const HomePage({super.key, required this.students});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -334,7 +335,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () => widget.onPickup(student),
+                    onPressed: () => _sendPickupRequest(student),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -586,5 +587,81 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  Future<void> _sendPickupRequest(Map<String, dynamic> student) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Get user data for guardian name
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      
+      final userData = userDoc.data();
+      final guardianName = userData?['fullName'] ?? 'Guardian';
+
+      // Send pickup request to Firebase Realtime Database
+      final database = FirebaseDatabase.instance.ref();
+      final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final pickupId = 'pickup_${DateTime.now().millisecondsSinceEpoch}';
+      
+      await database
+          .child('pickupQueue')
+          .child(todayKey)
+          .child(pickupId)
+          .set({
+        'studentId': student['studentId'],
+        'studentName': student['studentName'],
+        'grade': student['grade'],
+        'time': DateTime.now().toIso8601String(),
+        'guardianName': guardianName,
+        'guardianPhone': user.phoneNumber,
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Pickup request sent for ${student['studentName']}!\nPlease wait at the pickup area.',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error sending pickup request: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('Failed to send pickup request: ${e.toString()}'),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }

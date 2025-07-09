@@ -1,0 +1,475 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'dart:math' as math;
+import 'dart:async';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const PickupDisplayApp());
+}
+
+class PickupDisplayApp extends StatelessWidget {
+  const PickupDisplayApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Schoolfy Pickup Display',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        fontFamily: GoogleFonts.inter().fontFamily,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const PickupDisplayScreen(),
+    );
+  }
+}
+
+class PickupDisplayScreen extends StatefulWidget {
+  const PickupDisplayScreen({super.key});
+
+  @override
+  State<PickupDisplayScreen> createState() => _PickupDisplayScreenState();
+}
+
+class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  Map<String, List<PickupEntry>> _pickupsByGrade = {};
+  DateTime _lastUpdate = DateTime.now();
+  bool _isConnected = true;
+  String _todayKey = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    _setupPickupListener();
+    
+    // Auto-refresh every 30 seconds to ensure connection
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        setState(() {
+          _lastUpdate = DateTime.now();
+        });
+      }
+    });
+  }
+
+  void _setupPickupListener() {
+    _database.child('pickupQueue').child(_todayKey).onValue.listen(
+      (DatabaseEvent event) {
+        if (mounted) {
+          setState(() {
+            _isConnected = true;
+            _lastUpdate = DateTime.now();
+            _pickupsByGrade = _processPickupData(event.snapshot);
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isConnected = false;
+          });
+        }
+        print('Firebase connection error: $error');
+      },
+    );
+  }
+
+  Map<String, List<PickupEntry>> _processPickupData(DataSnapshot snapshot) {
+    final Map<String, List<PickupEntry>> result = {};
+    
+    if (snapshot.value != null) {
+      final data = Map<String, dynamic>.from(snapshot.value as Map);
+      
+      for (final entry in data.entries) {
+        final pickupData = Map<String, dynamic>.from(entry.value as Map);
+        final pickup = PickupEntry.fromJson(entry.key, pickupData);
+        
+        if (!result.containsKey(pickup.grade)) {
+          result[pickup.grade] = [];
+        }
+        result[pickup.grade]!.add(pickup);
+      }
+      
+      // Sort each grade's pickups by time (newest first)
+      for (final gradePickups in result.values) {
+        gradePickups.sort((a, b) => b.time.compareTo(a.time));
+      }
+    }
+    
+    return result;
+  }
+
+  Color _getGradeColor(String grade) {
+    final gradeColors = {
+      '1': Colors.red.shade400,
+      '2': Colors.blue.shade400,
+      '3': Colors.green.shade400,
+      '4': Colors.orange.shade400,
+      '5': Colors.purple.shade400,
+      '6': Colors.teal.shade400,
+    };
+    
+    final gradeNumber = grade.substring(0, 1);
+    return gradeColors[gradeNumber] ?? Colors.grey.shade400;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.deepPurple.shade50,
+              Colors.white,
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _pickupsByGrade.isEmpty
+                  ? _buildEmptyState()
+                  : _buildPickupsList(),
+            ),
+            _buildFooter(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.deepPurple,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.deepPurple.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.school,
+            color: Colors.white,
+            size: 48,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Schoolfy Pickup Display',
+                  style: GoogleFonts.inter(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Students ready for pickup • ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildConnectionStatus(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectionStatus() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _isConnected ? Colors.green : Colors.red,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _isConnected ? Icons.wifi : Icons.wifi_off,
+            color: Colors.white,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _isConnected ? 'LIVE' : 'OFFLINE',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.family_restroom,
+            size: 120,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No pickup requests yet',
+            style: GoogleFonts.inter(
+              fontSize: 32,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Students will appear here when guardians arrive',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPickupsList() {
+    final grades = _pickupsByGrade.keys.toList()..sort();
+    
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: math.min(grades.length, 3),
+          childAspectRatio: 0.8,
+          crossAxisSpacing: 24,
+          mainAxisSpacing: 24,
+        ),
+        itemCount: grades.length,
+        itemBuilder: (context, index) {
+          final grade = grades[index];
+          final pickups = _pickupsByGrade[grade]!;
+          return _buildGradeColumn(grade, pickups);
+        },
+      ),
+    );
+  }
+
+  Widget _buildGradeColumn(String grade, List<PickupEntry> pickups) {
+    final gradeColor = _getGradeColor(grade);
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: gradeColor, width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: gradeColor.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Grade Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: gradeColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(13),
+                topRight: Radius.circular(13),
+              ),
+            ),
+            child: Text(
+              'Grade $grade',
+              style: GoogleFonts.inter(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          // Students List
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: pickups.length,
+              itemBuilder: (context, index) {
+                final pickup = pickups[index];
+                return _buildStudentCard(pickup, gradeColor);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentCard(PickupEntry pickup, Color gradeColor) {
+    final timeDiff = DateTime.now().difference(pickup.time);
+    final isRecent = timeDiff.inMinutes < 5;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isRecent ? gradeColor.withOpacity(0.1) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isRecent ? gradeColor : Colors.grey.shade300,
+          width: isRecent ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: gradeColor,
+                radius: 20,
+                child: Text(
+                  pickup.studentName.substring(0, 1).toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pickup.studentName,
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      'Guardian arrived at ${DateFormat('HH:mm').format(pickup.time)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isRecent)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'NEW',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey.shade100,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Last updated: ${DateFormat('HH:mm:ss').format(_lastUpdate)}',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          Text(
+            'Total students: ${_pickupsByGrade.values.fold(0, (sum, list) => sum + list.length)}',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PickupEntry {
+  final String id;
+  final String studentId;
+  final String studentName;
+  final String grade;
+  final DateTime time;
+
+  PickupEntry({
+    required this.id,
+    required this.studentId,
+    required this.studentName,
+    required this.grade,
+    required this.time,
+  });
+
+  factory PickupEntry.fromJson(String id, Map<String, dynamic> json) {
+    return PickupEntry(
+      id: id,
+      studentId: json['studentId'] ?? '',
+      studentName: json['studentName'] ?? '',
+      grade: json['grade'] ?? '',
+      time: DateTime.parse(json['time'] ?? DateTime.now().toIso8601String()),
+    );
+  }
+}

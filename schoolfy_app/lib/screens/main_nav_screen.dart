@@ -20,11 +20,6 @@ class _MainNavScreenState extends State<MainNavScreen> {
     final pages = [
       HomePage(
         students: widget.students,
-        onPickup: (student) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Pickup alert sent for ${student['studentName']}')),
-          );
-        },
       ),
       const StudentsPage(),
       const AuthorizedGuardiansPage(),
