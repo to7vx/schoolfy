@@ -45,6 +45,10 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   DateTime _lastUpdate = DateTime.now();
   bool _isConnected = true;
   String _todayKey = '';
+  
+  // Auto-cleanup configuration
+  static const Duration _autoCleanupDuration = Duration(minutes: 10);
+  Timer? _cleanupTimer;
 
   @override
   void initState() {
@@ -60,6 +64,19 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         });
       }
     });
+    
+    // Start auto-cleanup timer - runs every minute to check for old entries
+    _cleanupTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        _performAutoCleanup();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _cleanupTimer?.cancel();
+    super.dispose();
   }
 
   void _setupPickupListener() {
@@ -137,6 +154,38 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
     return gradeColors[gradeNumber] ?? Colors.grey.shade400;
   }
 
+  String _getTimeAgoText(DateTime pickupTime) {
+    final now = DateTime.now();
+    final difference = now.difference(pickupTime);
+    
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min ago';
+    } else {
+      return 'At ${DateFormat('HH:mm').format(pickupTime)}';
+    }
+  }
+  
+  Color _getTimeAgoColor(DateTime pickupTime) {
+    final now = DateTime.now();
+    final difference = now.difference(pickupTime);
+    
+    if (difference.inMinutes < 2) {
+      return Colors.green.shade600; // Very recent - green
+    } else if (difference.inMinutes < 5) {
+      return Colors.orange.shade600; // Recent - orange  
+    } else {
+      return Colors.red.shade600; // Old - red
+    }
+  }
+  
+  bool _isUrgentPickup(DateTime pickupTime) {
+    final now = DateTime.now();
+    final difference = now.difference(pickupTime);
+    return difference.inMinutes >= 5; // Consider 5+ minutes as urgent
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -201,7 +250,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
                   ),
                 ),
                 Text(
-                  'Students ready for pickup • ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
+                  'Students ready for pickup • Auto-cleanup: ${_autoCleanupDuration.inMinutes} min • ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     color: Colors.white70,
@@ -300,6 +349,13 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
             style: GoogleFonts.inter(
               fontSize: 12,
               color: Colors.grey.shade600,
+            ),
+          ),
+          Text(
+            'Auto-cleanup: ${_autoCleanupDuration.inMinutes} minutes',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.blue.shade600,
             ),
           ),
         ],
@@ -431,10 +487,11 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
                       ),
                     ),
                     Text(
-                      'Guardian arrived at ${DateFormat('HH:mm').format(pickup.time)}',
+                      _getTimeAgoText(pickup.time),
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: _getTimeAgoColor(pickup.time),
+                        fontWeight: _isUrgentPickup(pickup.time) ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -489,6 +546,31 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _performAutoCleanup() async {
+    try {
+      final now = DateTime.now();
+      final todayRef = _database.child('pickupQueue').child(_todayKey);
+      final snapshot = await todayRef.get();
+      
+      if (snapshot.exists && snapshot.value != null) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        
+        for (final entry in data.entries) {
+          final pickupData = Map<String, dynamic>.from(entry.value as Map);
+          final pickupTime = DateTime.parse(pickupData['time'] ?? now.toIso8601String());
+          
+          // Remove entries older than the cleanup duration
+          if (now.difference(pickupTime) > _autoCleanupDuration) {
+            await todayRef.child(entry.key).remove();
+            print('Auto-cleaned old pickup entry: ${entry.key} (${pickupData['studentName']})');
+          }
+        }
+      }
+    } catch (e) {
+      print('Auto-cleanup error: $e');
+    }
   }
 }
 

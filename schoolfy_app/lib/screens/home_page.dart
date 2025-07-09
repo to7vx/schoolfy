@@ -15,6 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String? firstName;
+  Set<String> _pendingPickupRequests = {}; // Track students with pending pickup requests
   
   @override
   void initState() {
@@ -325,10 +326,16 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.notifications_active),
-                    label: const Text('Request Pickup'),
+                    icon: Icon(_pendingPickupRequests.contains(student['studentId']) 
+                        ? Icons.schedule 
+                        : Icons.notifications_active),
+                    label: Text(_pendingPickupRequests.contains(student['studentId'])
+                        ? 'Request Sent'
+                        : 'Request Pickup'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: _pendingPickupRequests.contains(student['studentId'])
+                          ? Colors.grey
+                          : Colors.deepPurple,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -590,6 +597,33 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _sendPickupRequest(Map<String, dynamic> student) async {
+    final studentId = student['studentId'];
+    
+    // Check if there's already a pending pickup request for this student
+    if (_pendingPickupRequests.contains(studentId)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.info, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Pickup request already sent for ${student['studentName']}'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Add to pending requests
+    _pendingPickupRequests.add(studentId);
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
@@ -644,8 +678,18 @@ class _HomePageState extends State<HomePage> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+        
+        // Remove from pending requests after 30 seconds to allow new requests
+        Future.delayed(const Duration(seconds: 30), () {
+          if (mounted) {
+            _pendingPickupRequests.remove(studentId);
+          }
+        });
       }
     } catch (e) {
+      // Remove from pending requests on error
+      _pendingPickupRequests.remove(studentId);
+      
       print('Error sending pickup request: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

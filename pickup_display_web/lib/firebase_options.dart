@@ -39,14 +39,13 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC7rZJ_tZJ_8B4k8QpN7-QrJ9K3L5M6N7O8',
-    appId: '1:123456789012:web:abc123def456',
-    messagingSenderId: '123456789012',
-    projectId: 'schoolfy-guardian',
-    authDomain: 'schoolfy-guardian.firebaseapp.com',
-    databaseURL: 'https://schoolfy-guardian-default-rtdb.firebaseio.com',
-    storageBucket: 'schoolfy-guardian.appspot.com',
-    measurementId: 'G-ABCDEFGHIJ',
+    apiKey: 'AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw',
+    appId: '1:477357689953:web:cd6e01e525cc4222aeae20',
+    messagingSenderId: '477357689953',
+    projectId: 'schoolfy-706ff',
+    authDomain: 'schoolfy-706ff.firebaseapp.com',
+    databaseURL: 'https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'schoolfy-706ff.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
