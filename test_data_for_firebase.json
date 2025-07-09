@@ -1,0 +1,29 @@
+// Manual test to add pickup data directly to Firebase Console
+// Copy and paste this data into Firebase Realtime Database under: pickupQueue/2025-07-09/
+
+{
+  "pickup_test_1": {
+    "studentId": "STU001",
+    "studentName": "أحمد محمد السعد",
+    "grade": "الصف الأول",
+    "time": "2025-07-09T16:50:00.000Z",
+    "guardianName": "محمد السعد",
+    "guardianPhone": "+966501234567"
+  },
+  "pickup_test_2": {
+    "studentId": "STU002", 
+    "studentName": "فاطمة علي أحمد",
+    "grade": "الصف الثاني",
+    "time": "2025-07-09T16:51:00.000Z",
+    "guardianName": "علي أحمد",
+    "guardianPhone": "+966501234568"
+  },
+  "pickup_test_3": {
+    "studentId": "STU003",
+    "studentName": "عبدالله سعد محمد", 
+    "grade": "الصف الثالث",
+    "time": "2025-07-09T16:52:00.000Z",
+    "guardianName": "سعد محمد",
+    "guardianPhone": "+966501234569"
+  }
+}

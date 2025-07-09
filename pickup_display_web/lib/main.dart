@@ -63,8 +63,10 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   }
 
   void _setupPickupListener() {
+    print('Setting up pickup listener for today: $_todayKey');
     _database.child('pickupQueue').child(_todayKey).onValue.listen(
       (DatabaseEvent event) {
+        print('Received database event!');
         if (mounted) {
           setState(() {
             _isConnected = true;
@@ -87,12 +89,23 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   Map<String, List<PickupEntry>> _processPickupData(DataSnapshot snapshot) {
     final Map<String, List<PickupEntry>> result = {};
     
+    // Debug logging
+    print('Processing pickup data...');
+    print('Snapshot exists: ${snapshot.exists}');
+    print('Snapshot value: ${snapshot.value}');
+    
     if (snapshot.value != null) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       
+      print('Data entries count: ${data.length}');
+      
       for (final entry in data.entries) {
+        print('Processing entry: ${entry.key}');
         final pickupData = Map<String, dynamic>.from(entry.value as Map);
+        print('Pickup data: $pickupData');
+        
         final pickup = PickupEntry.fromJson(entry.key, pickupData);
+        print('Created pickup entry: ${pickup.studentName} in ${pickup.grade}');
         
         if (!result.containsKey(pickup.grade)) {
           result[pickup.grade] = [];
@@ -106,6 +119,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       }
     }
     
+    print('Final result grades: ${result.keys.toList()}');
     return result;
   }
 
@@ -256,6 +270,36 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
             style: GoogleFonts.inter(
               fontSize: 18,
               color: Colors.grey.shade500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Debug Info:',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          Text(
+            'Today key: $_todayKey',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          Text(
+            'Connected: $_isConnected',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: _isConnected ? Colors.green : Colors.red,
+            ),
+          ),
+          Text(
+            'Last update: ${DateFormat('HH:mm:ss').format(_lastUpdate)}',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.grey.shade600,
             ),
           ),
         ],

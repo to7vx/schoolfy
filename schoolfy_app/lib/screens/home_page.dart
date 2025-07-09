@@ -654,7 +654,9 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 8),
-                Text('Failed to send pickup request: ${e.toString()}'),
+                Expanded(
+                  child: Text('Failed to send pickup request: ${e.toString()}'),
+                ),
               ],
             ),
             backgroundColor: Colors.red,
