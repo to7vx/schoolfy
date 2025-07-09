@@ -11,37 +11,58 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     return Scaffold(
-      appBar: AppBar(title: const Text('My Students')),
-      body: Column(
-        children: [
-          if (user != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('Welcome, ${user.uid}'),
-            ),
-          Expanded(
-            child: students.isEmpty
-                ? const Center(child: Text('No students linked.'))
-                : ListView.builder(
-                    itemCount: students.length,
-                    itemBuilder: (context, index) {
-                      final student = students[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          title: Text(student['studentName'] ?? ''),
-                          subtitle: Text('Grade: ${student['grade'] ?? ''}'),
-                          trailing: ElevatedButton(
-                            onPressed: () => onPickup(student),
-                            child: const Text('Send Pickup Alert'),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+      appBar: AppBar(
+        title: const Text('My Students'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => FirebaseAuth.instance.signOut(),
+            tooltip: 'Logout',
           ),
         ],
       ),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: students.isEmpty
+            ? const Center(child: Text('No students linked.'))
+            : ListView.builder(
+                itemCount: students.length,
+                itemBuilder: (context, index) {
+                  final student = students[index];
+                  return Card(
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.deepPurple.shade100,
+                        child: Icon(Icons.person, color: Colors.deepPurple.shade700),
+                      ),
+                      title: Text(
+                        student['studentName'] ?? '',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text('Grade: ${student['grade'] ?? ''}'),
+                      trailing: ElevatedButton.icon(
+                        icon: const Icon(Icons.notifications_active),
+                        label: const Text('Pickup'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => onPickup(student),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+      // No add student button
     );
   }
 }

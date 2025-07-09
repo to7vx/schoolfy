@@ -4,7 +4,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/auth/phone_auth_screen.dart';
-import 'screens/home_page.dart';
+
+import 'screens/main_nav_screen.dart';
 
 
 void main() async {
@@ -203,14 +204,7 @@ class AuthGate extends StatelessWidget {
                   'grade': data['grade'] ?? '',
                 };
               }).toList() ?? [];
-              return HomePage(
-                students: students,
-                onPickup: (student) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Pickup alert sent for ${student['studentName']}')),
-                  );
-                },
-              );
+              return MainNavScreen(students: students);
             },
           );
         }
