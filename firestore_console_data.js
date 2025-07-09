@@ -8,8 +8,8 @@
 // Document ID: (auto-generated)
 // Fields:
 {
-  "name":"Sara Al-Zanbaqi",
-  "grade": 2A",
+  "name": "Sara Al-Zanbaqi",
+  "grade": "2A",
   "schoolId": "SCH_001",
   "guardianPhone": "+966512345678",
   "primaryGuardianId": null,
@@ -71,6 +71,68 @@
   "address": "Riyadh, Saudi Arabia",
   "phone": "+966114567890",
   "createdAt": "2025-07-09T00:00:00.000Z"
+}
+
+// 7. Create 'guardian_authorizations' collection for testing
+// Click "Start collection" -> Enter collection ID: "guardian_authorizations"
+
+// 7. Sample Guardian Authorization (Approved):
+// Document ID: (auto-generated)
+// Fields:
+{
+  "studentId": "STUDENT_DOC_ID_HERE", // Replace with actual student document ID
+  "primaryGuardianId": "PRIMARY_GUARDIAN_UID", // Replace with primary guardian's UID
+  "guardianName": "Uncle Ali Al-Zanbaqi",
+  "guardianPhone": "+966501111111",
+  "message": "I am the uncle of Sara and would like access to view her progress.",
+  "permissions": {
+    "viewAttendance": true,
+    "viewGrades": true,
+    "pickupStudent": false,
+    "emergencyContact": true
+  },
+  "status": "approved",
+  "requestedAt": "2025-07-09T00:00:00.000Z",
+  "approvedAt": "2025-07-09T01:00:00.000Z"
+}
+
+// 8. Sample Guardian Authorization (Pending):
+// Document ID: (auto-generated)
+// Fields:
+{
+  "studentId": "STUDENT_DOC_ID_HERE", // Replace with actual student document ID
+  "primaryGuardianId": "PRIMARY_GUARDIAN_UID", // Replace with primary guardian's UID
+  "guardianName": "Aunt Maryam Al-Rashid",
+  "guardianPhone": "+966502222222",
+  "message": "I am the aunt and would like to help monitor the children's education.",
+  "permissions": {
+    "viewAttendance": true,
+    "viewGrades": false,
+    "pickupStudent": true,
+    "emergencyContact": true
+  },
+  "status": "pending",
+  "requestedAt": "2025-07-09T02:00:00.000Z"
+}
+
+// 9. Sample Guardian Authorization (Declined):
+// Document ID: (auto-generated)
+// Fields:
+{
+  "studentId": "STUDENT_DOC_ID_HERE", // Replace with actual student document ID
+  "primaryGuardianId": "PRIMARY_GUARDIAN_UID", // Replace with primary guardian's UID
+  "guardianName": "Someone Unknown",
+  "guardianPhone": "+966503333333",
+  "message": "I want access to student information.",
+  "permissions": {
+    "viewAttendance": true,
+    "viewGrades": true,
+    "pickupStudent": true,
+    "emergencyContact": true
+  },
+  "status": "declined",
+  "requestedAt": "2025-07-09T03:00:00.000Z",
+  "processedAt": "2025-07-09T03:30:00.000Z"
 }
 
 // 🎯 TESTING INSTRUCTIONS:
