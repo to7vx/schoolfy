@@ -80,8 +80,10 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   }
 
   void _setupPickupListener() {
+    print('Setting up pickup listener for path: pickupQueue/$_todayKey');
     _database.child('pickupQueue').child(_todayKey).onValue.listen(
       (DatabaseEvent event) {
+        print('Received database event: ${event.snapshot.value}');
         if (mounted) {
           setState(() {
             _isConnected = true;
@@ -91,6 +93,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         }
       },
       onError: (error) {
+        print('Database error: $error');
         if (mounted) {
           setState(() {
             _isConnected = false;
@@ -103,11 +106,14 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   Map<String, List<PickupEntry>> _processPickupData(DataSnapshot snapshot) {
     final Map<String, List<PickupEntry>> result = {};
     
-    // Debug logging
+    print('Processing pickup data...');
+    print('Snapshot exists: ${snapshot.exists}');
+    print('Snapshot value: ${snapshot.value}');
     
     if (snapshot.value != null) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       
+      print('Data entries: ${data.length}');
       
       for (final entry in data.entries) {
         final pickupData = Map<String, dynamic>.from(entry.value as Map);
@@ -126,6 +132,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       }
     }
     
+    print('Final result grades: ${result.keys.toList()}');
     return result;
   }
 

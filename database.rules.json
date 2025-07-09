@@ -1,6 +1,12 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false
+    "pickup_requests": {
+      ".read": true,
+      ".write": true
+    },
+    "pickupQueue": {
+      ".read": true,
+      ".write": true
+    }
   }
 }
