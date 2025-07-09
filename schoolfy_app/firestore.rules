@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users collection (Guardians)
+    match /users/{userId} {
+      // Guardians can only read/write their own user document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Admins can read/write all user documents
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Students collection
+    match /students/{studentId} {
+      // Guardians can only read students they are linked to
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        request.auth.uid in get(/databases/$(database)/documents/students/$(studentId)).data.get('authorizedGuardianIds', []) ||
+        get(/databases/$(database)/documents/students/$(studentId)).data.primaryGuardianId == 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
+      
+      // Only admins can write to students collection
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // System can auto-link students during authentication (special case)
+      allow update: if request.auth != null &&
+        // Only allow updating linking-related fields
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['primaryGuardianId', 'status', 'linkedAt']) &&
+        // Guardian phone must match the student's guardianPhone
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.phone == resource.data.guardianPhone;
+    }
+    
+    // Schools collection (read-only for guardians)
+    match /schools/{schoolId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Authorized guardians subcollection
+    match /students/{studentId}/authorizedGuardians/{guardianId} {
+      // Primary guardian can manage authorized guardians
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/students/$(studentId)).data.primaryGuardianId == 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
+      
+      // Admins can manage all authorized guardians
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -4,7 +4,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/auth/phone_auth_screen.dart';
-
 import 'screens/main_nav_screen.dart';
 
 
@@ -183,34 +182,265 @@ class AuthGate extends StatelessWidget {
         }
         if (snapshot.hasData) {
           final user = snapshot.data!;
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('guardians')
-                .doc(user.uid)
-                .collection('students')
-                .snapshots(),
-            builder: (context, studentSnapshot) {
-              if (studentSnapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          
+          // Automatically link guardian to students based on phone number
+          return FutureBuilder<void>(
+            future: _linkGuardianToStudents(user),
+            builder: (context, linkSnapshot) {
+              if (linkSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Linking to your students...'),
+                      ],
+                    ),
+                  ),
+                );
               }
-              if (studentSnapshot.hasError) {
-                return Scaffold(body: Center(child: Text('Error loading students')));
+              
+              if (linkSnapshot.hasError) {
+                return Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, size: 48, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text('Error linking students: ${linkSnapshot.error}'),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => FirebaseAuth.instance.signOut(),
+                          child: Text('Try Again'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               }
-              final students = studentSnapshot.data?.docs.map((doc) {
-                final data = doc.data();
-                return {
-                  'studentId': doc.id,
-                  'studentName': data['studentName'] ?? '',
-                  'grade': data['grade'] ?? '',
-                };
-              }).toList() ?? [];
-              return MainNavScreen(students: students);
+              
+              // Now get the linked students for this guardian
+              return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .snapshots(),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                  }
+                  
+                  if (userSnapshot.hasError) {
+                    return Scaffold(body: Center(child: Text('Error loading user data')));
+                  }
+                  
+                  final userData = userSnapshot.data?.data();
+                  final linkedStudentIds = List<String>.from(userData?['linkedStudents'] ?? []);
+                  
+                  if (linkedStudentIds.isEmpty) {
+                    return const Scaffold(
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.school, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('No linked students yet'),
+                            SizedBox(height: 8),
+                            Text('Contact your school administrator to link your children.',
+                                style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  // Get student details for linked students
+                  return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance
+                        .collection('students')
+                        .where(FieldPath.documentId, whereIn: linkedStudentIds)
+                        .snapshots(),
+                    builder: (context, studentSnapshot) {
+                      if (studentSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                      }
+                      
+                      if (studentSnapshot.hasError) {
+                        return Scaffold(body: Center(child: Text('Error loading students')));
+                      }
+                      
+                      final students = studentSnapshot.data?.docs.map((doc) {
+                        final data = doc.data();
+                        return {
+                          'studentId': doc.id,
+                          'studentName': data['name'] ?? '',
+                          'grade': data['grade'] ?? '',
+                          'schoolId': data['schoolId'] ?? '',
+                        };
+                      }).toList() ?? [];
+                      
+                      return MainNavScreen(students: students);
+                    },
+                  );
+                },
+              );
             },
           );
         }
         return const WelcomeScreen();
       },
     );
+  }
+
+  /// Automatically link guardian to students based on phone number
+  Future<void> _linkGuardianToStudents(User user) async {
+    try {
+      final phoneNumber = user.phoneNumber;
+      if (phoneNumber == null) {
+        throw Exception('Phone number not available');
+      }
+
+      print('Starting linking process for phone: $phoneNumber');
+
+      // Check if guardian user document exists
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      String guardianId;
+      List<String> currentLinkedStudents = [];
+      bool userExists = userDoc.exists;
+
+      if (userExists) {
+        // User exists, get current data
+        final userData = userDoc.data()!;
+        guardianId = userData['guardianId'] ?? _generateGuardianId();
+        currentLinkedStudents = List<String>.from(userData['linkedStudents'] ?? []);
+        print('Existing guardian found with ID: $guardianId, current linked students: $currentLinkedStudents');
+      } else {
+        // Generate new guardian ID for new user
+        guardianId = _generateGuardianId();
+        print('Creating new guardian with ID: $guardianId');
+      }
+
+      // Query students collection for matching guardian phone
+      final studentsQuery = await FirebaseFirestore.instance
+          .collection('students')
+          .where('guardianPhone', isEqualTo: phoneNumber)
+          .get();
+
+      print('Found ${studentsQuery.docs.length} students matching phone number');
+
+      final batch = FirebaseFirestore.instance.batch();
+      final newLinkedStudents = List<String>.from(currentLinkedStudents);
+
+      for (final studentDoc in studentsQuery.docs) {
+        final studentData = studentDoc.data();
+        final studentId = studentDoc.id;
+        final studentName = studentData['name'] ?? 'Unknown';
+
+        print('Processing student: $studentName (ID: $studentId)');
+        print('Current primaryGuardianId: ${studentData['primaryGuardianId']}');
+        print('Current status: ${studentData['status']}');
+
+        // Check if student is already linked to another guardian
+        if (studentData['primaryGuardianId'] != null && 
+            studentData['primaryGuardianId'] != guardianId) {
+          print('Student $studentName is already linked to another guardian: ${studentData['primaryGuardianId']}');
+          continue;
+        }
+
+        // Link student to guardian
+        if (!newLinkedStudents.contains(studentId)) {
+          newLinkedStudents.add(studentId);
+          print('Added student $studentName to linked students list');
+        } else {
+          print('Student $studentName already in linked students list');
+        }
+
+        // Update student document
+        final studentRef = FirebaseFirestore.instance
+            .collection('students')
+            .doc(studentId);
+            
+        print('Adding batch update for student: $studentName -> Guardian: $guardianId');
+        batch.update(studentRef, {
+          'primaryGuardianId': guardianId,
+          'status': 'linked',
+          'linkedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Handle guardian document creation or update
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      
+      if (userExists) {
+        // Update existing guardian document
+        batch.update(userRef, {
+          'linkedStudents': newLinkedStudents,
+          'guardianId': guardianId,
+          'lastLinkCheck': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Create new guardian document
+        batch.set(userRef, {
+          'uid': user.uid,
+          'guardianId': guardianId,
+          'phone': phoneNumber,
+          'linkedStudents': newLinkedStudents,
+          'role': 'guardian',
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastLinkCheck': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Commit all changes
+      print('Committing batch with ${newLinkedStudents.length} students...');
+      await batch.commit();
+      print('Batch committed successfully');
+
+      // Verify the changes were applied
+      print('Verifying student updates...');
+      for (final studentDoc in studentsQuery.docs) {
+        final studentId = studentDoc.id;
+        final studentName = studentDoc.data()['name'] ?? 'Unknown';
+        
+        try {
+          final updatedStudent = await FirebaseFirestore.instance
+              .collection('students')
+              .doc(studentId)
+              .get();
+              
+          if (updatedStudent.exists) {
+            final updatedData = updatedStudent.data()!;
+            print('Verified $studentName: primaryGuardianId = ${updatedData['primaryGuardianId']}, status = ${updatedData['status']}');
+          } else {
+            print('ERROR: Student $studentName not found after update');
+          }
+        } catch (e) {
+          print('ERROR verifying student $studentName: $e');
+        }
+      }
+
+      print('Successfully linked ${newLinkedStudents.length} students to guardian $guardianId');
+      print('Final linked students: $newLinkedStudents');
+      
+    } catch (e) {
+      print('Error linking guardian to students: $e');
+      rethrow;
+    }
+  }
+
+  /// Generate a unique guardian ID
+  String _generateGuardianId() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final random = timestamp.toString().substring(timestamp.toString().length - 6);
+    return 'GDN_$random';
   }
 }
 
