@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'l10n/app_localizations.dart';
@@ -30,15 +31,16 @@ class SchoolfyAdminApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: Consumer<LocaleProvider>(
-        builder: (context, localeProvider, child) {
+      child: Consumer2<LocaleProvider, ThemeProvider>(
+        builder: (context, localeProvider, themeProvider, child) {
           return MaterialApp(
             title: 'Schoolfy Admin Dashboard',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.light,
+            themeMode: themeProvider.themeMode,
             locale: localeProvider.currentLocale,
             localizationsDelegates: const [
               AppLocalizations.delegate,

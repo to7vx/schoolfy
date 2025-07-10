@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
@@ -113,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 32),
 
-                        // Language Toggle
+                        // Language and Theme Toggle
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -124,6 +125,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                               icon: const Icon(Icons.language),
                               label: Text(isArabic ? l10n.english : l10n.arabic),
+                            ),
+                            const SizedBox(width: 16),
+                            Consumer<ThemeProvider>(
+                              builder: (context, themeProvider, child) {
+                                return IconButton(
+                                  onPressed: () {
+                                    themeProvider.toggleTheme();
+                                  },
+                                  icon: Icon(
+                                    themeProvider.isDarkMode 
+                                      ? Icons.light_mode 
+                                      : Icons.dark_mode,
+                                  ),
+                                  tooltip: themeProvider.isDarkMode 
+                                    ? 'Switch to Light Mode' 
+                                    : 'Switch to Dark Mode',
+                                );
+                              },
                             ),
                           ],
                         ),

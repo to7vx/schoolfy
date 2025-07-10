@@ -56,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
                     title: 'Profile Information',
                     icon: Icons.person_outline,
                     children: [
-                      _buildProfileInfo(authProvider.userData),
+                      _buildProfileInfo(context, authProvider.userData),
                     ],
                   ),
                   
@@ -89,7 +89,7 @@ class SettingsScreen extends StatelessWidget {
                     title: 'System Information',
                     icon: Icons.info_outline,
                     children: [
-                      _buildSystemInfo(),
+                      _buildSystemInfo(context),
                     ],
                   ),
                   
@@ -144,7 +144,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileInfo(Map<String, dynamic>? userData) {
+  Widget _buildProfileInfo(BuildContext context, Map<String, dynamic>? userData) {
     return Column(
       children: [
         Row(
@@ -177,7 +177,7 @@ class SettingsScreen extends StatelessWidget {
                   Text(
                     userData?['email'] ?? 'admin@schoolfy.com',
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                       fontSize: 14,
                     ),
                   ),
@@ -207,6 +207,7 @@ class SettingsScreen extends StatelessWidget {
           children: [
             Expanded(
               child: _buildInfoTile(
+                context,
                 'School ID',
                 userData?['schoolId'] ?? 'SCH_001',
                 Icons.school,
@@ -215,6 +216,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: _buildInfoTile(
+                context,
                 'Last Login',
                 'Just now',
                 Icons.access_time,
@@ -226,11 +228,12 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(String label, String value, IconData icon) {
+  Widget _buildInfoTile(BuildContext context, String label, String value, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[50],
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -238,12 +241,16 @@ class SettingsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: Colors.grey[600]),
+              Icon(
+                icon, 
+                size: 16, 
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+              ),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -253,7 +260,8 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -298,22 +306,6 @@ class SettingsScreen extends StatelessWidget {
       children: [
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.palette_outlined),
-          title: const Text('Theme'),
-          subtitle: const Text('Light theme'),
-          trailing: const Icon(Icons.light_mode, color: AppTheme.primaryColor),
-        ),
-        const Divider(),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.format_size),
-          title: const Text('Text Size'),
-          subtitle: const Text('Standard'),
-          trailing: const Text('Aa', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        ),
-        const Divider(),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.refresh),
           title: const Text('Auto Refresh'),
           subtitle: const Text('Real-time updates enabled'),
@@ -327,19 +319,19 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSystemInfo() {
+  Widget _buildSystemInfo(BuildContext context) {
     return Column(
       children: [
-        _buildSystemInfoRow('Version', '1.0.0'),
-        _buildSystemInfoRow('Build', '2025.01.10'),
-        _buildSystemInfoRow('Platform', 'Flutter Web'),
-        _buildSystemInfoRow('Firebase', 'Connected'),
-        _buildSystemInfoRow('Last Updated', 'January 10, 2025'),
+        _buildSystemInfoRow(context, 'Version', '1.0.0'),
+        _buildSystemInfoRow(context, 'Build', '2025.01.10'),
+        _buildSystemInfoRow(context, 'Platform', 'Flutter Web'),
+        _buildSystemInfoRow(context, 'Firebase', 'Connected'),
+        _buildSystemInfoRow(context, 'Last Updated', 'January 10, 2025'),
       ],
     );
   }
 
-  Widget _buildSystemInfoRow(String label, String value) {
+  Widget _buildSystemInfoRow(BuildContext context, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -348,13 +340,14 @@ class SettingsScreen extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               fontWeight: FontWeight.w500,
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontWeight: FontWeight.w600,
             ),
           ),

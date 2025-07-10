@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'dashboard_home_screen.dart';
@@ -91,7 +92,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _selectedIndex = index;
                 });
               },
-              backgroundColor: Colors.grey[50],
+              backgroundColor: Theme.of(context).colorScheme.surface,
               elevation: 2,
               leading: Column(
                 children: [
@@ -120,7 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       'Admin',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ],
@@ -160,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Text(
                             authProvider.userData?['email'] ?? '',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               fontSize: 10,
                             ),
                             maxLines: 1,
@@ -188,10 +189,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   // App Bar
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -201,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       title: Text(navigationItems[_selectedIndex].label),
                       backgroundColor: Colors.transparent,
                       elevation: 0,
-                      foregroundColor: AppTheme.primaryColor,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
                       automaticallyImplyLeading: false,
                       actions: [
                         // Language Toggle
@@ -212,6 +213,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           },
                           icon: const Icon(Icons.language),
                           tooltip: l10n.language,
+                        ),
+                        // Theme Toggle
+                        Consumer<ThemeProvider>(
+                          builder: (context, themeProvider, child) {
+                            return IconButton(
+                              onPressed: () {
+                                themeProvider.toggleTheme();
+                              },
+                              icon: Icon(
+                                themeProvider.isDarkMode 
+                                  ? Icons.light_mode 
+                                  : Icons.dark_mode,
+                              ),
+                              tooltip: themeProvider.isDarkMode 
+                                ? 'Switch to Light Mode' 
+                                : 'Switch to Dark Mode',
+                            );
+                          },
                         ),
                         // Refresh Button
                         IconButton(
