@@ -1,0 +1,57 @@
+{
+  "rules": {
+    "pickupQueue": {
+      ".read": true,
+      ".write": "auth != null",
+      "$date": {
+        "$pickupId": {
+          ".validate": "newData.hasChildren(['studentId', 'studentName', 'grade', 'time', 'guardianName', 'guardianPhone'])",
+          ".indexOn": ["grade", "time"],
+          "studentId": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "studentName": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "grade": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "time": {
+            ".validate": "newData.isString()"
+          },
+          "guardianName": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "guardianPhone": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "status": {
+            ".validate": "newData.isString() && (newData.val() == 'waiting' || newData.val() == 'picked_up' || newData.val() == 'cancelled')"
+          }
+        }
+      }
+    },
+    "liveStats": {
+      ".read": true,
+      ".write": "auth != null",
+      "totalWaiting": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "totalToday": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      },
+      "lastUpdated": {
+        ".validate": "newData.isString()"
+      }
+    },
+    "notifications": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$userId": {
+        "$notificationId": {
+          ".validate": "newData.hasChildren(['title', 'message', 'time', 'read'])"
+        }
+      }
+    }
+  }
+}

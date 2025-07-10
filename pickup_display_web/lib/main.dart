@@ -46,8 +46,8 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   bool _isConnected = true;
   String _todayKey = '';
   
-  // Auto-cleanup configuration
-  static const Duration _autoCleanupDuration = Duration(minutes: 10);
+  // Auto-cleanup configuration - removes pickup entries after 5 minutes
+  static const Duration _autoCleanupDuration = Duration(minutes: 5);
   Timer? _cleanupTimer;
 
   @override
@@ -548,22 +548,46 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
     try {
       final now = DateTime.now();
       final todayRef = _database.child('pickupQueue').child(_todayKey);
+      
       final snapshot = await todayRef.get();
       
       if (snapshot.exists && snapshot.value != null) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
+        int cleanedCount = 0;
         
         for (final entry in data.entries) {
-          final pickupData = Map<String, dynamic>.from(entry.value as Map);
-          final pickupTime = DateTime.parse(pickupData['time'] ?? now.toIso8601String());
-          
-          // Remove entries older than the cleanup duration
-          if (now.difference(pickupTime) > _autoCleanupDuration) {
-            await todayRef.child(entry.key).remove();
+          try {
+            final pickupData = Map<String, dynamic>.from(entry.value as Map);
+            final timeString = pickupData['time'];
+            
+            if (timeString == null) continue;
+            
+            DateTime pickupTime;
+            try {
+              pickupTime = DateTime.parse(timeString);
+            } catch (parseError) {
+              continue;
+            }
+            
+            final age = now.difference(pickupTime);
+            
+            // Remove entries older than the cleanup duration
+            if (age > _autoCleanupDuration) {
+              await todayRef.child(entry.key).remove();
+              cleanedCount++;
+            }
+          } catch (entryError) {
+            // Continue processing other entries if one fails
+            continue;
           }
+        }
+        
+        if (cleanedCount > 0) {
+          print('Auto-cleanup: removed $cleanedCount old pickup entries');
         }
       }
     } catch (e) {
+      print('Auto-cleanup error: $e');
     }
   }
 }

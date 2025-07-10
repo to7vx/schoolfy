@@ -18,7 +18,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   String? _error;
 
   Future<void> _verifyPhone() async {
-    setState(() { _loading = true; _error = null; });
+    if (mounted) setState(() { _loading = true; _error = null; });
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: _phoneController.text.trim(),
       verificationCompleted: (PhoneAuthCredential credential) async {
@@ -26,24 +26,26 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         if (mounted) Navigator.of(context).popUntil((route) => route.isFirst); // Pop to root/AuthGate
       },
       verificationFailed: (FirebaseAuthException e) {
-        setState(() { _error = e.message; _loading = false; });
+        if (mounted) setState(() { _error = e.message; _loading = false; });
       },
       codeSent: (String verificationId, int? resendToken) {
-        setState(() {
-          _verificationId = verificationId;
-          _codeSent = true;
-          _loading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _verificationId = verificationId;
+            _codeSent = true;
+            _loading = false;
+          });
+        }
       },
       codeAutoRetrievalTimeout: (String verificationId) {
-        setState(() { _verificationId = verificationId; _loading = false; });
+        if (mounted) setState(() { _verificationId = verificationId; _loading = false; });
       },
     );
   }
 
   Future<void> _signInWithSmsCode() async {
     if (_verificationId == null) return;
-    setState(() { _loading = true; _error = null; });
+    if (mounted) setState(() { _loading = true; _error = null; });
     try {
       final credential = PhoneAuthProvider.credential(
         verificationId: _verificationId!,
@@ -57,7 +59,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         );
       }
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
   }
 

@@ -1,0 +1,8 @@
+{
+  "name": "firebase-admin-setup",
+  "version": "1.0.0",
+  "main": "create-admin.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

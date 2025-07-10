@@ -1,0 +1,5 @@
+cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+
+cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d chrome --web-port=8083
+
+cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8083

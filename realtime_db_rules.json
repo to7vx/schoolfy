@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "pickupQueue": {
+      ".read": true,
+      ".write": true,
+      "$date": {
+        "$pickupId": {
+          ".validate": "newData.hasChildren(['studentId', 'studentName', 'grade', 'time', 'guardianName'])"
+        }
+      }
+    }
+  }
+}
