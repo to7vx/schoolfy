@@ -101,8 +101,11 @@ class AuthProvider extends ChangeNotifier {
           });
         }
       } else {
-        // Fallback for admin@schoolfy.com (keep this for now)
-        if (_user?.email == 'admin@schoolfy.com') {
+        // No admin document found, but user might still have access through Firestore rules
+        // Let's try to read a protected collection to check if they have admin access
+        try {
+          await _firestore.collection('admins').limit(1).get();
+          // If we can read admins collection, user has admin access through rules
           _isAdmin = true;
           _userData = {
             'email': _user!.email,
@@ -118,123 +121,14 @@ class AuthProvider extends ChangeNotifier {
           };
           
           if (kDebugMode) {
-            print('🔍 DEBUG: Using fallback admin access for admin@schoolfy.com');
+            print('🔍 DEBUG: User has admin access through Firestore rules');
           }
-        } else {
+        } catch (rulesError) {
           _isAdmin = false;
           _userData = null;
           
           if (kDebugMode) {
-            print('🔍 DEBUG: No admin document found, access denied');
-          }
-        }
-      }
-    } catch (e) {
-      // In case of any error, still grant access to admin@schoolfy.com
-      if (_user?.email == 'admin@schoolfy.com') {
-        _isAdmin = true;
-        _userData = {
-          'email': _user!.email,
-          'name': 'Admin User',
-          'role': 'admin',
-          'status': 'active',
-        };
-        if (kDebugMode) {
-          print('🔍 DEBUG: Error occurred, but granting access to admin@schoolfy.com: $e');
-        }
-      } else {
-        _isAdmin = false;
-        _userData = null;
-        if (kDebugMode) {
-          print('🔍 DEBUG: Error checking admin access: $e');
-        }
-      }
-    }
-  }
-      
-      // Check in the admins collection first (by UID)
-      DocumentSnapshot adminDoc = await _firestore.collection('admins').doc(uid).get();
-      
-      if (kDebugMode) {
-        print('🔍 DEBUG: Admin document exists by UID: ${adminDoc.exists}');
-        print('🔍 DEBUG: Document path: admins/$uid');
-      }
-      
-      // If not found by UID, search by email in admins collection
-      if (!adminDoc.exists && _user?.email != null) {
-        if (kDebugMode) {
-          print('🔍 DEBUG: Searching admins collection by email: ${_user!.email}');
-        }
-        
-        final querySnapshot = await _firestore
-            .collection('admins')
-            .where('email', isEqualTo: _user!.email)
-            .limit(1)
-            .get();
-            
-        if (querySnapshot.docs.isNotEmpty) {
-          adminDoc = querySnapshot.docs.first;
-          if (kDebugMode) {
-            print('🔍 DEBUG: Found admin document by email with ID: ${adminDoc.id}');
-          }
-        } else {
-          if (kDebugMode) {
-            print('🔍 DEBUG: No admin document found by email');
-          }
-        }
-      }
-      
-      if (kDebugMode && adminDoc.exists) {
-        final data = adminDoc.data() as Map<String, dynamic>?;
-        print('🔍 DEBUG: Admin document data: $data');
-        print('🔍 DEBUG: Admin status: ${data?['status']}');
-        print('🔍 DEBUG: Admin permissions: ${data?['permissions']}');
-      }
-      
-      if (adminDoc.exists) {
-        _userData = adminDoc.data() as Map<String, dynamic>?;
-        
-        // Check if admin is active
-        final isActive = _userData?['status'] == 'active';
-        _isAdmin = isActive;
-        
-        if (kDebugMode) {
-          print('🔍 DEBUG: Admin status from document: ${_userData?['status']}');
-          print('🔍 DEBUG: Is admin active: $_isAdmin');
-        }
-        
-        // Update last login timestamp
-        if (isActive) {
-          await _firestore.collection('admins').doc(adminDoc.id).update({
-            'lastLoginAt': FieldValue.serverTimestamp(),
-          });
-        }
-      } else {
-        // Temporary fallback for admin@schoolfy.com
-        if (_user?.email == 'admin@schoolfy.com') {
-          _isAdmin = true;
-          _userData = {
-            'email': _user!.email,
-            'name': 'Admin User',
-            'role': 'admin',
-            'status': 'active',
-            'permissions': {
-              'manageStudents': true,
-              'manageGuardians': true,
-              'viewPickupHistory': true,
-              'exportData': true,
-            }
-          };
-          
-          if (kDebugMode) {
-            print('🔍 DEBUG: Using temporary admin access for admin@schoolfy.com');
-          }
-        } else {
-          _isAdmin = false;
-          _userData = null;
-          
-          if (kDebugMode) {
-            print('🔍 DEBUG: No admin document found, access denied');
+            print('🔍 DEBUG: No admin document found and no rule-based access, access denied');
           }
         }
       }
