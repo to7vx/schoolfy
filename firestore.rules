@@ -2,15 +2,39 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && (
+        // Temporary: Allow admin@schoolfy.com access
+        request.auth.token.email == 'admin@schoolfy.com' ||
+        // Check if user has admin role in users collection
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        // Check if user exists in admins collection and is active
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.status == 'active')
+      );
+    }
+    
+    // Admins collection
+    match /admins/{adminId} {
+      // Admins can read/write their own admin document
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+      
+      // Admins can read/write other admin documents (for admin management)
+      allow read, write: if isAdmin();
+      
+      // Allow email-based queries for admin authentication
+      allow read: if request.auth != null;
+    }
+    
     // Users collection (Guardians)
     match /users/{userId} {
       // Guardians can only read/write their own user document
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
       // Admins can read/write all user documents
-      allow read, write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read, write: if isAdmin();
     }
     
     // Students collection
@@ -33,17 +57,13 @@ service cloud.firestore {
         request.auth.token.phone_number == resource.data.guardianPhone;
       
       // Only admins can write to students collection (full access)
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if isAdmin();
     }
     
     // Schools collection (read-only for guardians)
     match /schools/{schoolId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if isAdmin();
     }
     
     // Authorized guardians subcollection
@@ -55,9 +75,29 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
       
       // Admins can manage all authorized guardians
-      allow read, write: if request.auth != null && 
+      allow read, write: if isAdmin();
+    }
+    
+    // Pickup logs collection
+    match /pickupLogs/{logId} {
+      // Admins can read and write pickup logs
+      allow read, write: if isAdmin();
+      
+      // Guardians can read pickup logs for their own students
+      allow read: if request.auth != null && 
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        resource.data.guardianId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
+    }
+    
+    // Guardian authorization requests (if needed)
+    match /authorizationRequests/{requestId} {
+      // Admins can read and write authorization requests
+      allow read, write: if isAdmin();
+      
+      // Guardians can read requests related to their students
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        resource.data.primaryGuardianId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
     }
     
     // Default deny all other access
