@@ -1,13 +1,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Temporary: Allow all authenticated users full access
-    // This is for testing only - will be made more secure later
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && (
+        // Check if user has admin role in users collection
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        // Check if user exists in admins collection and is active
+        (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.status == 'active') ||
+        // Allow admin@schoolfy.com as fallback
+        request.auth.token.email == 'admin@schoolfy.com'
+      );
     }
-  }
-}
+    
+    // Admins collection
+    match /admins/{adminId} {
+      // Admins can read/write their own admin document
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+      
+      // Admins can read/write other admin documents (for admin management)
+      allow read, write: if isAdmin();
+      
+      // Allow email-based queries for admin authentication
+      allow read: if request.auth != null;
+    }
     
     // Users collection (Guardians)
     match /users/{userId} {
