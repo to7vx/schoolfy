@@ -53,6 +53,18 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const Spacer(),
+              ElevatedButton.icon(
+                onPressed: _cleanupEmptyGuardianIds,
+                icon: const Icon(Icons.cleaning_services, size: 16),
+                label: const Text('Cleanup DB'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: Size.zero,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -228,7 +240,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        if (primaryGuardianId != null)
+        if (primaryGuardianId != null && primaryGuardianId.isNotEmpty)
           FutureBuilder<DocumentSnapshot>(
             future: _firestore.collection('users').doc(primaryGuardianId).get(),
             builder: (context, snapshot) {
@@ -275,8 +287,21 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                       ),
                       IconButton(
                         onPressed: studentId.isNotEmpty 
-                            ? () => _unlinkPrimaryGuardian(studentId)
-                            : null,
+                            ? () {
+                                print('DEBUG: Unlink Primary Guardian - Student ID: "$studentId"');
+                                _unlinkPrimaryGuardian(studentId);
+                              }
+                            : () {
+                                print('DEBUG: Cannot unlink - Student ID is empty');
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Invalid student ID'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                         icon: const Icon(Icons.link_off, color: Colors.red),
                         tooltip: 'Unlink Guardian',
                       ),
@@ -315,7 +340,9 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
   }
 
   Widget _buildAuthorizedGuardiansSection(String studentId, Map<String, dynamic> student) {
-    final authorizedIds = List<String>.from(student['authorizedGuardianIds'] ?? []);
+    final authorizedIds = List<String>.from(student['authorizedGuardianIds'] ?? [])
+        .where((id) => id.isNotEmpty) // Filter out empty strings
+        .toList();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,9 +417,22 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                           ),
                         ),
                         IconButton(
-                          onPressed: guardianId.isNotEmpty 
-                              ? () => _removeAuthorizedGuardian(studentId, guardianId)
-                              : null,
+                          onPressed: guardianId.isNotEmpty && studentId.isNotEmpty
+                              ? () {
+                                  print('DEBUG: Remove Authorized Guardian - Student ID: "$studentId", Guardian ID: "$guardianId"');
+                                  _removeAuthorizedGuardian(studentId, guardianId);
+                                }
+                              : () {
+                                  print('DEBUG: Cannot remove guardian - StudentId empty: ${studentId.isEmpty}, GuardianId empty: ${guardianId.isEmpty}');
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Invalid IDs (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
                           icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 18),
                           tooltip: 'Remove Guardian',
                         ),
@@ -421,6 +461,58 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
           ),
       ],
     );
+  }
+
+  // Cleanup function to remove empty guardian IDs from all student records
+  Future<void> _cleanupEmptyGuardianIds() async {
+    try {
+      print('DEBUG: Starting cleanup of empty guardian IDs...');
+      final studentsSnapshot = await _firestore.collection('students').get();
+      
+      for (final doc in studentsSnapshot.docs) {
+        final student = doc.data();
+        final authorizedIds = List<String>.from(student['authorizedGuardianIds'] ?? []);
+        final cleanedIds = authorizedIds.where((id) => id.isNotEmpty).toList();
+        
+        if (authorizedIds.length != cleanedIds.length) {
+          print('DEBUG: Cleaning student ${doc.id} - removing ${authorizedIds.length - cleanedIds.length} empty IDs');
+          await _firestore.collection('students').doc(doc.id).update({
+            'authorizedGuardianIds': cleanedIds,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        
+        // Also check primary guardian ID
+        final primaryGuardianId = student['primaryGuardianId'];
+        if (primaryGuardianId == '') {
+          print('DEBUG: Cleaning student ${doc.id} - removing empty primary guardian ID');
+          await _firestore.collection('students').doc(doc.id).update({
+            'primaryGuardianId': null,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      
+      print('DEBUG: Cleanup completed successfully');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Database cleanup completed successfully'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      print('DEBUG: Error during cleanup: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error during cleanup: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showLinkGuardianDialog(String studentId, Map<String, dynamic> student) {
@@ -452,14 +544,16 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                     title: Text(guardian['name'] ?? 'Unknown'),
                     subtitle: Text(guardian['phone'] ?? guardian['email'] ?? 'No contact'),
                     onTap: () async {
-                      if (guardians[index].id.isNotEmpty) {
+                      print('DEBUG: Primary Guardian Dialog - Student ID: "$studentId", Guardian Doc ID: "${guardians[index].id}"');
+                      if (guardians[index].id.isNotEmpty && studentId.isNotEmpty) {
                         await _linkPrimaryGuardian(studentId, guardians[index].id);
                         if (mounted) Navigator.of(context).pop();
                       } else {
+                        print('DEBUG: Invalid selection - StudentId empty: ${studentId.isEmpty}, GuardianId empty: ${guardians[index].id.isEmpty}');
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Invalid guardian selected'),
+                            SnackBar(
+                              content: Text('Invalid selection (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardians[index].id.isEmpty ? "empty" : "valid"})'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -516,14 +610,16 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                     title: Text(guardian['name'] ?? 'Unknown'),
                     subtitle: Text(guardian['phone'] ?? guardian['email'] ?? 'No contact'),
                     onTap: () async {
-                      if (guardians[index].id.isNotEmpty) {
+                      print('DEBUG: Add Authorized Guardian Dialog - Student ID: "$studentId", Guardian Doc ID: "${guardians[index].id}"');
+                      if (guardians[index].id.isNotEmpty && studentId.isNotEmpty) {
                         await _addAuthorizedGuardian(studentId, guardians[index].id);
                         if (mounted) Navigator.of(context).pop();
                       } else {
+                        print('DEBUG: Invalid selection - StudentId empty: ${studentId.isEmpty}, GuardianId empty: ${guardians[index].id.isEmpty}');
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Invalid guardian selected'),
+                            SnackBar(
+                              content: Text('Invalid selection (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardians[index].id.isEmpty ? "empty" : "valid"})'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -630,10 +726,11 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
 
   Future<void> _addAuthorizedGuardian(String studentId, String guardianId) async {
     if (studentId.isEmpty || guardianId.isEmpty) {
+      print('DEBUG: Invalid IDs for adding authorized guardian - Student ID: "$studentId", Guardian ID: "$guardianId"');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid student or guardian ID'),
+          SnackBar(
+            content: Text('Invalid student or guardian ID (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
             backgroundColor: Colors.red,
           ),
         );
@@ -642,6 +739,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
     }
 
     try {
+      print('DEBUG: Adding authorized guardian - Student ID: "$studentId", Guardian ID: "$guardianId"');
       await _firestore.collection('students').doc(studentId).update({
         'authorizedGuardianIds': FieldValue.arrayUnion([guardianId]),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -669,10 +767,11 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
 
   Future<void> _removeAuthorizedGuardian(String studentId, String guardianId) async {
     if (studentId.isEmpty || guardianId.isEmpty) {
+      print('DEBUG: Invalid IDs for removing authorized guardian - Student ID: "$studentId", Guardian ID: "$guardianId"');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid student or guardian ID'),
+          SnackBar(
+            content: Text('Invalid student or guardian ID (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
             backgroundColor: Colors.red,
           ),
         );
@@ -681,6 +780,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
     }
 
     try {
+      print('DEBUG: Removing authorized guardian - Student ID: "$studentId", Guardian ID: "$guardianId"');
       await _firestore.collection('students').doc(studentId).update({
         'authorizedGuardianIds': FieldValue.arrayRemove([guardianId]),
         'updatedAt': FieldValue.serverTimestamp(),
