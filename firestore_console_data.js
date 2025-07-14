@@ -3,7 +3,7 @@
   "name": "Student Name",
   "grade": "2A", 
   "schoolId": "SCH_001",
-  "guardianPhone": "+966xxxxxxxxx", // Replace with actual guardian phone
+  "guardianPhone": "+966xxxxxxxxx", 
   "primaryGuardianId": null,
   "authorizedGuardianIds": [],
   "status": "pending",

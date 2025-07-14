@@ -403,7 +403,7 @@ class AuthGate extends StatelessWidget {
                     );
                   }
                   
-                  // Now get the linked students for this guardian
+                  // get the linked students for this guardian
                   return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                     stream: FirebaseFirestore.instance
                         .collection('users')

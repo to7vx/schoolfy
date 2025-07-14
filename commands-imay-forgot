@@ -1,5 +1,25 @@
-cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+#cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
 
-cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d chrome --web-port=8083
+#cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d chrome --web-port=8083
 
-cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8083
+#cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8083
+
+
+#http://localhost:8081/
+
+#admin@schoolfy.com
+#Admin123 
+
+
+firebase deploy --only firestore:rules
+npx firebase deploy --only firestore:rules
+npm install -g firebase-tools
+
+
+
+
+
+git status
+
+
+

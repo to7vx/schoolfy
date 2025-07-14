@@ -34,7 +34,7 @@ export const cleanupPickupQueue = onRequest(
         if (dateObj < cutoffTime) {
           await queueRef.child(date).remove();
           cleanedCount++;
-          logger.info(`Cleaned up pickup queue for date: ${date}`);
+          logger.info(`Clean                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ed up pickup queue for date: ${date}`);
         }
       }
       
