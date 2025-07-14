@@ -38,6 +38,28 @@ class AuthProvider extends ChangeNotifier {
   
   Future<void> _checkAdminRole(String uid) async {
     try {
+      // Temporary: Always grant admin access for admin@schoolfy.com
+      if (_user?.email == 'admin@schoolfy.com') {
+        _isAdmin = true;
+        _userData = {
+          'email': _user!.email,
+          'name': 'Admin User',
+          'role': 'admin',
+          'status': 'active',
+          'permissions': {
+            'manageStudents': true,
+            'manageGuardians': true,
+            'viewPickupHistory': true,
+            'exportData': true,
+          }
+        };
+        
+        if (kDebugMode) {
+          print('🔍 DEBUG: Granted admin access for admin@schoolfy.com (bypass)');
+        }
+        return;
+      }
+      
       if (kDebugMode) {
         print('🔍 DEBUG: Checking admin access for user: $uid');
         print('🔍 DEBUG: User email: ${_user?.email}');
