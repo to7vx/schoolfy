@@ -101,11 +101,32 @@ class AuthProvider extends ChangeNotifier {
           });
         }
       } else {
-        _isAdmin = false;
-        _userData = null;
-        
-        if (kDebugMode) {
-          print('🔍 DEBUG: No admin document found, access denied');
+        // Temporary fallback for admin@schoolfy.com
+        if (_user?.email == 'admin@schoolfy.com') {
+          _isAdmin = true;
+          _userData = {
+            'email': _user!.email,
+            'name': 'Admin User',
+            'role': 'admin',
+            'status': 'active',
+            'permissions': {
+              'manageStudents': true,
+              'manageGuardians': true,
+              'viewPickupHistory': true,
+              'exportData': true,
+            }
+          };
+          
+          if (kDebugMode) {
+            print('🔍 DEBUG: Using temporary admin access for admin@schoolfy.com');
+          }
+        } else {
+          _isAdmin = false;
+          _userData = null;
+          
+          if (kDebugMode) {
+            print('🔍 DEBUG: No admin document found, access denied');
+          }
         }
       }
     } catch (e) {
