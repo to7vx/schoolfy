@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'dart:async';
 
 class HomePage extends StatefulWidget {
   final List<Map<String, dynamic>> students;
@@ -17,12 +17,22 @@ class _HomePageState extends State<HomePage> {
   String? firstName;
   Set<String> _pendingPickupRequests = {}; // Track students with pending pickup requests
   Map<String, String> _gradeLeaveTime = {}; // Store leave times for each grade
+  List<StreamSubscription>? _gradeStreamSubscriptions; // Stream subscriptions for real-time updates
   
   @override
   void initState() {
     super.initState();
+    print('DEBUG: HomePage initState called');
+    print('DEBUG: Students data: ${widget.students}');
     _loadUserData();
     _loadGradeLeaveTime();
+    _setupGradeLeaveTimeStreams();
+  }
+
+  @override
+  void dispose() {
+    _gradeStreamSubscriptions?.forEach((subscription) => subscription.cancel());
+    super.dispose();
   }
   
   Future<void> _loadUserData() async {
@@ -63,37 +73,127 @@ class _HomePageState extends State<HomePage> {
         }
       }
       
+      print('DEBUG: Student grades found: $studentGrades');
+      
       // Fetch leave times for each grade
       for (String grade in studentGrades) {
+        print('DEBUG: Fetching leave time for grade: $grade');
         final gradeDoc = await FirebaseFirestore.instance
             .collection('grade_leave_times')
             .doc(grade)
             .get();
             
+        print('DEBUG: Grade document exists for $grade: ${gradeDoc.exists}');
+        if (gradeDoc.exists) {
+          print('DEBUG: Grade document data for $grade: ${gradeDoc.data()}');
+        }
+            
         if (gradeDoc.exists && mounted) {
           final data = gradeDoc.data();
           final scheduledTime = data?['scheduledTime'] as Timestamp?;
-          final leaveTime = data?['leaveTime'] as Timestamp?; 
+          final leaveTime = data?['leaveTime']; // Can be String or Timestamp
+          final status = data?['status'];
+          
+          print('DEBUG: Grade $grade - Status: $status, LeaveTime: $leaveTime, ScheduledTime: $scheduledTime');
           
           String timeString = '8:00 AM'; // Default fallback
           
           if (leaveTime != null) {
             // If leave time is already set today, show it
-            final leaveDateTime = leaveTime.toDate();
-            timeString = _formatTime(leaveDateTime);
+            if (leaveTime is String) {
+              // New format: leaveTime is a string like "20:37"
+              timeString = _formatTimeFromString(leaveTime);
+              print('DEBUG: Using leaveTime string for $grade: $timeString');
+            } else if (leaveTime is Timestamp) {
+              // Old format: leaveTime is a Timestamp
+              final leaveDateTime = leaveTime.toDate();
+              timeString = _formatTime(leaveDateTime);
+              print('DEBUG: Using leaveTime timestamp for $grade: $timeString');
+            }
           } else if (scheduledTime != null) {
             // If scheduled time is set, show it
             final scheduledDateTime = scheduledTime.toDate();
             timeString = _formatTime(scheduledDateTime);
+            print('DEBUG: Using scheduledTime for $grade: $timeString');
           }
           
           setState(() {
             _gradeLeaveTime[grade] = timeString;
           });
+          
+          print('DEBUG: Set leave time for $grade to: $timeString');
         }
       }
+      
+      print('DEBUG: Final gradeLeaveTime map: $_gradeLeaveTime');
     } catch (e) {
       print('Error loading grade leave times: $e');
+    }
+  }
+
+  void _setupGradeLeaveTimeStreams() {
+    // Get unique grades from students
+    Set<String> studentGrades = {};
+    for (var student in widget.students) {
+      final grade = student['grade'];
+      if (grade != null && grade.isNotEmpty) {
+        studentGrades.add(grade);
+      }
+    }
+
+    _gradeStreamSubscriptions = [];
+
+    // Set up real-time listeners for each grade
+    for (String grade in studentGrades) {
+      print('DEBUG: Setting up stream listener for grade: $grade');
+      final subscription = FirebaseFirestore.instance
+          .collection('grade_leave_times')
+          .doc(grade)
+          .snapshots()
+          .listen((snapshot) {
+        print('DEBUG: Stream update for grade $grade - exists: ${snapshot.exists}');
+        if (snapshot.exists) {
+          print('DEBUG: Stream data for $grade: ${snapshot.data()}');
+        }
+        
+        if (snapshot.exists && mounted) {
+          final data = snapshot.data();
+          final scheduledTime = data?['scheduledTime'] as Timestamp?;
+          final leaveTime = data?['leaveTime']; // Can be String or Timestamp
+          final status = data?['status'] ?? 'not_sent';
+          
+          print('DEBUG: Stream - Grade $grade, Status: $status, LeaveTime: $leaveTime, ScheduledTime: $scheduledTime');
+          
+          String timeString = '8:00 AM'; // Default fallback
+          
+          if (status == 'sent' && leaveTime != null) {
+            // If leave time is already set today, show it
+            if (leaveTime is String) {
+              // New format: leaveTime is a string like "20:37"
+              timeString = _formatTimeFromString(leaveTime);
+              print('DEBUG: Stream - Using sent leaveTime string for $grade: $timeString');
+            } else if (leaveTime is Timestamp) {
+              // Old format: leaveTime is a Timestamp
+              final leaveDateTime = leaveTime.toDate();
+              timeString = _formatTime(leaveDateTime);
+              print('DEBUG: Stream - Using sent leaveTime timestamp for $grade: $timeString');
+            }
+          } else if (scheduledTime != null) {
+            // If scheduled time is set, show it
+            final scheduledDateTime = scheduledTime.toDate();
+            timeString = _formatTime(scheduledDateTime);
+            print('DEBUG: Stream - Using scheduledTime for $grade: $timeString');
+          }
+          
+          setState(() {
+            _gradeLeaveTime[grade] = timeString;
+          });
+          
+          print('DEBUG: Stream - Updated leave time for $grade to: $timeString');
+        }
+      });
+      
+      _gradeStreamSubscriptions!.add(subscription);
     }
   }
   
@@ -104,6 +204,24 @@ class _HomePageState extends State<HomePage> {
     final hour12 = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
     final minuteStr = minute.toString().padLeft(2, '0');
     return '$hour12:$minuteStr $period';
+  }
+
+  String _formatTimeFromString(String timeString) {
+    try {
+      // Parse time string like "20:37" or "08:30"
+      final parts = timeString.split(':');
+      if (parts.length != 2) return timeString; // Return original if invalid format
+      
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final period = hour >= 12 ? 'PM' : 'AM';
+      final hour12 = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      final minuteStr = minute.toString().padLeft(2, '0');
+      return '$hour12:$minuteStr $period';
+    } catch (e) {
+      print('DEBUG: Error formatting time string $timeString: $e');
+      return timeString; // Return original if parsing fails
+    }
   }
 
   @override
@@ -199,7 +317,7 @@ class _HomePageState extends State<HomePage> {
                     itemCount: widget.students.length,
                     itemBuilder: (context, index) {
                       final student = widget.students[index];
-                      return _buildEnhancedStudentCard(context, student);
+                      return _buildStudentCard(student, index);
                     },
                   ),
                 ),
@@ -208,12 +326,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEnhancedStudentCard(BuildContext context, Map<String, dynamic> student) {
+  Widget _buildStudentCard(Map<String, dynamic> student, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -222,202 +341,199 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Student header with avatar and basic info
-            Row(
-              children: [
-                // Enhanced avatar with grade indicator
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: _getGradeColor(student['grade']),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Student info row
+          Row(
+            children: [
+              // Student avatar
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: _getAvatarColor(index),
+                    child: Text(
+                      _getInitials(student['studentName'] ?? ''),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Text(
-                        _getInitials(student['studentName'] ?? ''),
+                        student['grade'] ?? '',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    Positioned(
-                      bottom: -2,
-                      right: -2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.deepPurple,
-                          borderRadius: BorderRadius.circular(10),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              // Student name and info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      student['studentName'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.school,
+                          size: 16,
+                          color: Colors.grey[600],
                         ),
-                        child: Text(
-                          student['grade'] ?? '',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(width: 4),
+                        Text(
+                          'Grade ${student['grade'] ?? ''}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Al-Noor Elementary School',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Status indicator
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: Colors.green.shade600,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Linked',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green.shade600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 16),
-                // Student name and info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        student['studentName'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.school,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Grade ${student['grade'] ?? ''}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Al-Noor Elementary School',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Status indicator
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        size: 16,
-                        color: Colors.green.shade600,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Linked',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Quick info cards
-            Row(
-              children: [
-                _buildInfoCard(
-                  icon: Icons.access_time,
-                  label: 'Today',
-                  value: '8:00 AM',
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 12),
-                _buildInfoCard(
-                  icon: Icons.person,
-                  label: 'Status',
-                  value: 'Present',
-                  color: Colors.green,
-                ),
-                const SizedBox(width: 12),
-                _buildInfoCard(
-                  icon: Icons.directions_car,
-                  label: 'Pickup',
-                  value: 'Ready',
-                  color: Colors.orange,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: Icon(_pendingPickupRequests.contains(student['studentId']) 
-                        ? Icons.schedule 
-                        : Icons.notifications_active),
-                    label: Text(_pendingPickupRequests.contains(student['studentId'])
-                        ? 'Request Sent'
-                        : 'Request Pickup'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _pendingPickupRequests.contains(student['studentId'])
-                          ? Colors.grey
-                          : Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _sendPickupRequest(student),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.info_outline),
-                  label: const Text('Details'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.deepPurple,
-                    side: const BorderSide(color: Colors.deepPurple),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Quick info cards
+          Row(
+            children: [
+              _buildInfoCard(
+                icon: Icons.access_time,
+                label: 'Leave Time',
+                value: _gradeLeaveTime[student['grade']] ?? '8:00 AM',
+                color: Colors.blue,
+              ),
+              const SizedBox(width: 12),
+              _buildInfoCard(
+                icon: Icons.person,
+                label: 'Status',
+                value: 'Present',
+                color: Colors.green,
+              ),
+              const SizedBox(width: 12),
+              _buildInfoCard(
+                icon: Icons.directions_car,
+                label: 'Pickup',
+                value: 'Ready',
+                color: Colors.orange,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: Icon(_pendingPickupRequests.contains(student['studentId']) 
+                      ? Icons.schedule 
+                      : Icons.notifications_active),
+                  label: Text(_pendingPickupRequests.contains(student['studentId'])
+                      ? 'Request Sent'
+                      : 'Request Pickup'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _pendingPickupRequests.contains(student['studentId'])
+                        ? Colors.grey
+                        : Colors.deepPurple,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () => _showStudentDetails(context, student),
+                  onPressed: () => _sendPickupRequest(student),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.info_outline),
+                label: const Text('Details'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.deepPurple,
+                  side: const BorderSide(color: Colors.deepPurple),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => _showStudentDetails(context, student),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -434,15 +550,16 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 20, color: color),
+            Icon(icon, color: color, size: 20),
             const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -460,12 +577,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Color _getGradeColor(String? grade) {
-    if (grade == null) return Colors.grey;
-    final gradeNum = int.tryParse(grade.substring(0, 1)) ?? 0;
-    switch (gradeNum) {
+  Color _getAvatarColor(int index) {
+    switch (index % 5) {
+      case 0:
+        return Colors.deepPurple;
       case 1:
-        return Colors.purple;
+        return Colors.teal;
       case 2:
         return Colors.blue;
       case 3:
@@ -520,13 +637,13 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               children: [
                 CircleAvatar(
-                  radius: 25,
-                  backgroundColor: _getGradeColor(student['grade']),
+                  radius: 30,
+                  backgroundColor: Colors.deepPurple,
                   child: Text(
                     _getInitials(student['studentName'] ?? ''),
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -589,7 +706,7 @@ class _HomePageState extends State<HomePage> {
                   _buildDetailSection(
                     'Attendance',
                     [
-                      _buildDetailItem('Today', 'Present (8:00 AM)'),
+                      _buildDetailItem('Today', 'Present (${_gradeLeaveTime[student['grade']] ?? '8:00 AM'})'),
                       _buildDetailItem('This Week', '5/5 days'),
                       _buildDetailItem('This Month', '20/22 days'),
                     ],
@@ -658,107 +775,79 @@ class _HomePageState extends State<HomePage> {
     if (_pendingPickupRequests.contains(studentId)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.info, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Pickup request already sent for ${student['studentName']}'),
-                ),
-              ],
-            ),
+          const SnackBar(
+            content: Text('Pickup request already sent for this student'),
             backgroundColor: Colors.orange,
-            duration: const Duration(seconds: 2),
           ),
         );
       }
       return;
     }
 
-    // Add to pending requests
-    _pendingPickupRequests.add(studentId);
-
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Get user data for guardian name
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      
-      final userData = userDoc.data();
-      final guardianName = userData?['fullName'] ?? 'Guardian';
-
-      // Send pickup request to Firebase Realtime Database
-      final database = FirebaseDatabase.instance.ref();
-      final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final pickupId = 'pickup_${DateTime.now().millisecondsSinceEpoch}';
-      
-      await database
-          .child('pickupQueue')
-          .child(todayKey)
-          .child(pickupId)
-          .set({
-        'studentId': student['studentId'],
-        'studentName': student['studentName'],
-        'grade': student['grade'],
-        'time': DateTime.now().toIso8601String(),
-        'guardianName': guardianName,
-        'guardianPhone': user.phoneNumber,
+      // Add to pending requests immediately for UI feedback
+      setState(() {
+        _pendingPickupRequests.add(studentId);
       });
 
-      // Show success message
+      // Generate pickup request
+      final pickupRequest = {
+        'studentId': studentId,
+        'studentName': student['studentName'],
+        'grade': student['grade'],
+        'guardianId': FirebaseAuth.instance.currentUser?.uid,
+        'guardianName': firstName ?? 'Guardian',
+        'requestTime': FieldValue.serverTimestamp(),
+        'status': 'pending',
+        'priority': 'normal',
+        'estimatedPickupTime': DateTime.now().add(const Duration(minutes: 15)),
+      };
+
+      // Send to pickup queue
+      await FirebaseDatabase.instance
+          .ref('pickup_queue')
+          .push()
+          .set(pickupRequest);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Pickup request sent for ${student['studentName']}!\nPlease wait at the pickup area.',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
+            content: Text('Pickup request sent for ${student['studentName']}'),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Undo',
+              textColor: Colors.white,
+              onPressed: () {
+                // Remove from pending requests if user wants to undo
+                setState(() {
+                  _pendingPickupRequests.remove(studentId);
+                });
+              },
+            ),
           ),
         );
-        
-        // Remove from pending requests after 30 seconds to allow new requests
-        Future.delayed(const Duration(seconds: 30), () {
-          if (mounted) {
-            _pendingPickupRequests.remove(studentId);
-          }
-        });
       }
+
+      // Auto-remove from pending requests after 30 seconds
+      Timer(const Duration(seconds: 30), () {
+        if (mounted) {
+          setState(() {
+            _pendingPickupRequests.remove(studentId);
+          });
+        }
+      });
+
     } catch (e) {
       // Remove from pending requests on error
-      _pendingPickupRequests.remove(studentId);
-      
+      setState(() {
+        _pendingPickupRequests.remove(studentId);
+      });
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Failed to send pickup request: ${e.toString()}'),
-                ),
-              ],
-            ),
+            content: Text('Failed to send pickup request: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
           ),
         );
       }

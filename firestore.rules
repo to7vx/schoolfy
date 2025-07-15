@@ -100,6 +100,73 @@ service cloud.firestore {
         resource.data.primaryGuardianId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
     }
     
+    // Grade leave times collection
+    match /grade_leave_times/{gradeId} {
+      // Admins can read and write grade leave times
+      allow read, write: if isAdmin();
+      
+      // Guardians can read leave times for grades their students are in
+      allow read: if request.auth != null;
+    }
+    
+    // Guardian authorizations collection (for mobile app)
+    match /guardian_authorizations/{authId} {
+      // Admins can read and write guardian authorizations
+      allow read, write: if isAdmin();
+      
+      // Guardians can read their own authorizations
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        resource.data.guardianId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId;
+    }
+    
+    // Global settings collection (for admin dashboard)
+    match /settings/{settingId} {
+      // Only admins can read and write global settings
+      allow read, write: if isAdmin();
+    }
+    
+    // History/audit logs collection (for admin dashboard)
+    match /history/{historyId} {
+      // Only admins can read and write history logs
+      allow read, write: if isAdmin();
+    }
+    
+    // Automation service collection (for admin dashboard)
+    match /automation/{automationId} {
+      // Only admins can read and write automation settings
+      allow read, write: if isAdmin();
+    }
+    
+    // Notifications collection (for admin dashboard)
+    match /notifications/{notificationId} {
+      // Admins can read and write notifications
+      allow read, write: if isAdmin();
+      
+      // Guardians can read notifications sent to them
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        resource.data.recipientId == request.auth.uid;
+    }
+    
+    // System logs collection (for admin dashboard)
+    match /systemLogs/{logId} {
+      // Only admins can read and write system logs
+      allow read, write: if isAdmin();
+    }
+    
+    // Leave time history collection (for admin dashboard)
+    match /leave_time_history/{historyId} {
+      // Only admins can read and write leave time history
+      allow read, write: if isAdmin();
+    }
+    
+    // Scheduled notifications collection (for admin dashboard)
+    match /scheduled_notifications/{notificationId} {
+      // Only admins can read and write scheduled notifications
+      allow read, write: if isAdmin();
+    }
+    
     // Default deny all other access
     match /{document=**} {
       allow read, write: if false;

@@ -19,8 +19,8 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
   bool _globalAutoNotification = false;
 
   final List<String> _grades = [
-    'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6',
-    'Kindergarten', 'Pre-K'
+    '1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B',
+    'KG-A', 'KG-B', 'Pre-K-A', 'Pre-K-B'
   ];
 
   @override
@@ -466,16 +466,33 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
               const Spacer(),
               if (gradeData['autoNotificationEnabled'] == true) ...[
                 const Text('Scheduled: '),
-                SizedBox(
-                  width: 120,
-                  child: TextFormField(
-                    controller: _timeControllers[grade],
-                    decoration: const InputDecoration(
-                      hintText: 'HH:MM',
-                      isDense: true,
-                      border: OutlineInputBorder(),
+                InkWell(
+                  onTap: () => _showTimePicker(context, grade, true),
+                  child: Container(
+                    width: 120,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    onChanged: (value) => _updateScheduledTime(grade, value),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _timeControllers[grade]?.text.isNotEmpty == true 
+                                ? _timeControllers[grade]!.text 
+                                : 'HH:MM',
+                            style: TextStyle(
+                              color: _timeControllers[grade]?.text.isNotEmpty == true 
+                                  ? Colors.black87 
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -502,9 +519,19 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
               ElevatedButton.icon(
                 onPressed: () => _setLeaveTimeNow(grade),
                 icon: const Icon(Icons.access_time, size: 16),
-                label: const Text('Set Leave Time Now'),
+                label: const Text('Set Time Now'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () => _showTimePicker(context, grade, false),
+                icon: const Icon(Icons.schedule, size: 16),
+                label: const Text('Pick Custom Time'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -695,6 +722,96 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
     }
   }
 
+  Future<void> _showTimePicker(BuildContext context, String grade, bool isScheduled) async {
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: AppTheme.primaryColor,
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (selectedTime != null) {
+      final timeString = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
+      _timeControllers[grade]?.text = timeString;
+      
+      if (isScheduled) {
+        await _updateScheduledTime(grade, timeString);
+      } else {
+        await _setCustomLeaveTime(grade, selectedTime);
+      }
+    }
+  }
+
+  Future<void> _setCustomLeaveTime(String grade, TimeOfDay selectedTime) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final now = DateTime.now();
+      final customDateTime = DateTime(now.year, now.month, now.day, selectedTime.hour, selectedTime.minute);
+      final leaveTimeString = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
+      
+      // Update grade status with custom time
+      await _firestore.collection('grade_leave_times').doc(grade).set({
+        'gradeId': grade,
+        'leaveTime': leaveTimeString, // Mobile app expects string format like "09:30"
+        'schoolId': 'SCH_001',
+        'setBy': authProvider.user?.email ?? 'admin@schoolfy.com',
+        'setAt': FieldValue.serverTimestamp(),
+        'isActive': true,
+        'status': 'sent',
+        'lastSent': Timestamp.fromDate(customDateTime),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Update all students in this grade
+      final studentsSnapshot = await _firestore
+          .collection('students')
+          .where('grade', isEqualTo: grade)
+          .get();
+
+      final batch = _firestore.batch();
+      for (var doc in studentsSnapshot.docs) {
+        batch.update(doc.reference, {
+          'leaveStatus': 'left',
+          'leaveTime': Timestamp.fromDate(customDateTime),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+
+      // Send notification
+      await _sendNotification(grade);
+
+      // Log to history
+      await _logToHistory(grade, 'Sent', studentsSnapshot.docs.length, authProvider.userData?['name'] ?? 'Admin');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Leave time set to ${selectedTime.format(context)} for Grade $grade'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error setting custom leave time: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error setting leave time'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _updateCustomNote(String grade, String note) async {
     try {
       await _firestore.collection('grade_leave_times').doc(grade).set({
@@ -710,11 +827,17 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final now = DateTime.now();
+      final leaveTimeString = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
       
       // Update grade status
       await _firestore.collection('grade_leave_times').doc(grade).set({
+        'gradeId': grade,
+        'leaveTime': leaveTimeString, // Mobile app expects string format like "09:30"
+        'schoolId': 'SCH_001',
+        'setBy': authProvider.user?.email ?? 'admin@schoolfy.com',
+        'setAt': FieldValue.serverTimestamp(),
+        'isActive': true,
         'status': 'sent',
-        'leaveTime': Timestamp.fromDate(now),
         'lastSent': Timestamp.fromDate(now),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
