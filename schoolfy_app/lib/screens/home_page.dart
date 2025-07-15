@@ -16,11 +16,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String? firstName;
   Set<String> _pendingPickupRequests = {}; // Track students with pending pickup requests
+  Map<String, String> _gradeLeaveTime = {}; // Store leave times for each grade
   
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadGradeLeaveTime();
   }
   
   Future<void> _loadUserData() async {
@@ -48,6 +50,60 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
+  }
+
+  Future<void> _loadGradeLeaveTime() async {
+    try {
+      // Get unique grades from students
+      Set<String> studentGrades = {};
+      for (var student in widget.students) {
+        final grade = student['grade'];
+        if (grade != null && grade.isNotEmpty) {
+          studentGrades.add(grade);
+        }
+      }
+      
+      // Fetch leave times for each grade
+      for (String grade in studentGrades) {
+        final gradeDoc = await FirebaseFirestore.instance
+            .collection('grade_leave_times')
+            .doc(grade)
+            .get();
+            
+        if (gradeDoc.exists && mounted) {
+          final data = gradeDoc.data();
+          final scheduledTime = data?['scheduledTime'] as Timestamp?;
+          final leaveTime = data?['leaveTime'] as Timestamp?; 
+          
+          String timeString = '8:00 AM'; // Default fallback
+          
+          if (leaveTime != null) {
+            // If leave time is already set today, show it
+            final leaveDateTime = leaveTime.toDate();
+            timeString = _formatTime(leaveDateTime);
+          } else if (scheduledTime != null) {
+            // If scheduled time is set, show it
+            final scheduledDateTime = scheduledTime.toDate();
+            timeString = _formatTime(scheduledDateTime);
+          }
+          
+          setState(() {
+            _gradeLeaveTime[grade] = timeString;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading grade leave times: $e');
+    }
+  }
+  
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour12 = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    final minuteStr = minute.toString().padLeft(2, '0');
+    return '$hour12:$minuteStr $period';
   }
 
   @override
