@@ -2,10 +2,12 @@
   "rules": {
     "pickupQueue": {
       ".read": true,
-      ".write": "auth != null",
+      ".write": false,
       "$date": {
+        ".read": true,
+        ".write": "auth != null",
         "$pickupId": {
-          ".validate": "newData.hasChildren(['studentId', 'studentName', 'grade', 'time', 'guardianName']) && auth != null"
+          ".validate": "newData.hasChildren(['studentId', 'studentName', 'grade', 'guardianId', 'requestTime']) && auth != null"
         }
       }
     }

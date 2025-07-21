@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../services/admin_notification_service.dart';
 
 class StudentLeaveTimeScreen extends StatefulWidget {
   const StudentLeaveTimeScreen({super.key});
@@ -16,6 +17,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final Map<String, TextEditingController> _noteControllers = {};
   final Map<String, TextEditingController> _timeControllers = {};
+  final AdminNotificationService _notificationService = AdminNotificationService();
   bool _globalAutoNotification = false;
 
   final List<String> _grades = [
@@ -887,53 +889,33 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
 
   Future<void> _sendNotification(String grade) async {
     try {
-      // Get all students in this grade
-      final studentsSnapshot = await _firestore
-          .collection('students')
-          .where('grade', isEqualTo: grade)
-          .get();
+      // Get custom note from the controller
+      final customNote = _noteControllers[grade]?.text ?? '';
+      
+      // Use the enhanced notification service
+      await _notificationService.sendGradeLeaveTimeNotification(
+        grade: grade,
+        customNote: customNote,
+      );
 
-      // Get all unique guardian IDs
-      Set<String> guardianIds = {};
-      for (var doc in studentsSnapshot.docs) {
-        final student = doc.data();
-        final primaryGuardianId = student['primaryGuardianId'];
-        if (primaryGuardianId != null && primaryGuardianId.isNotEmpty) {
-          guardianIds.add(primaryGuardianId);
-        }
-        final authorizedIds = List<String>.from(student['authorizedGuardianIds'] ?? []);
-        guardianIds.addAll(authorizedIds.where((id) => id.isNotEmpty));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Notifications sent to Grade $grade guardians'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
-
-      // Get custom note
-      final gradeDoc = await _firestore.collection('grade_leave_times').doc(grade).get();
-      final gradeData = gradeDoc.data();
-      final customNote = gradeDoc.exists && gradeData != null ? gradeData['customNote'] ?? '' : '';
-
-      // Create notification for each guardian
-      final batch = _firestore.batch();
-      for (String guardianId in guardianIds) {
-        final notificationRef = _firestore.collection('notifications').doc();
-        batch.set(notificationRef, {
-          'recipientId': guardianId,
-          'title': '$grade Dismissal Notice',
-          'message': customNote.isNotEmpty 
-              ? '$grade students are being dismissed. $customNote'
-              : '$grade students are being dismissed. Please arrange pickup.',
-          'type': 'leave_time',
-          'grade': grade,
-          'timestamp': FieldValue.serverTimestamp(),
-          'read': false,
-          'priority': 'high',
-        });
-      }
-
-      await batch.commit();
-
-      print('Sent notifications to ${guardianIds.length} guardians for $grade');
-
     } catch (e) {
       print('Error sending notification: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending notifications: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

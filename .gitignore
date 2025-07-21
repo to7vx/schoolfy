@@ -67,3 +67,20 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Flutter build files
+**/build/
+**/.dart_tool/
+**/flutter_assets/
+
+# Debug and test files
+debug_*.dart
+test_*.dart
+test_*.json
+test_*.bat
+run_*.bat
+pglite-debug.log
+
+# IDE files
+.vscode/
+.idea/

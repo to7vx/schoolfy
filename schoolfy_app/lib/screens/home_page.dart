@@ -98,8 +98,9 @@ class _HomePageState extends State<HomePage> {
           
           String timeString = '8:00 AM'; // Default fallback
           
+          // Priority: 1. leaveTime (current day), 2. scheduledTime (future), 3. default
           if (leaveTime != null) {
-            // If leave time is already set today, show it
+            // If leave time is set, show it
             if (leaveTime is String) {
               // New format: leaveTime is a string like "20:37"
               timeString = _formatTimeFromString(leaveTime);
@@ -166,17 +167,18 @@ class _HomePageState extends State<HomePage> {
           
           String timeString = '8:00 AM'; // Default fallback
           
-          if (status == 'sent' && leaveTime != null) {
-            // If leave time is already set today, show it
+          // Priority: 1. leaveTime (current day), 2. scheduledTime (future), 3. default
+          if (leaveTime != null) {
+            // If leave time is set, show it regardless of status
             if (leaveTime is String) {
               // New format: leaveTime is a string like "20:37"
               timeString = _formatTimeFromString(leaveTime);
-              print('DEBUG: Stream - Using sent leaveTime string for $grade: $timeString');
+              print('DEBUG: Stream - Using leaveTime string for $grade: $timeString');
             } else if (leaveTime is Timestamp) {
               // Old format: leaveTime is a Timestamp
               final leaveDateTime = leaveTime.toDate();
               timeString = _formatTime(leaveDateTime);
-              print('DEBUG: Stream - Using sent leaveTime timestamp for $grade: $timeString');
+              print('DEBUG: Stream - Using leaveTime timestamp for $grade: $timeString');
             }
           } else if (scheduledTime != null) {
             // If scheduled time is set, show it
@@ -185,11 +187,15 @@ class _HomePageState extends State<HomePage> {
             print('DEBUG: Stream - Using scheduledTime for $grade: $timeString');
           }
           
-          setState(() {
-            _gradeLeaveTime[grade] = timeString;
-          });
-          
-          print('DEBUG: Stream - Updated leave time for $grade to: $timeString');
+          // Only update state if the time actually changed
+          if (_gradeLeaveTime[grade] != timeString) {
+            setState(() {
+              _gradeLeaveTime[grade] = timeString;
+            });
+            print('DEBUG: Stream - Updated leave time for $grade to: $timeString');
+          } else {
+            print('DEBUG: Stream - Leave time for $grade unchanged: $timeString');
+          }
         }
       });
       
@@ -797,15 +803,19 @@ class _HomePageState extends State<HomePage> {
         'grade': student['grade'],
         'guardianId': FirebaseAuth.instance.currentUser?.uid,
         'guardianName': firstName ?? 'Guardian',
-        'requestTime': FieldValue.serverTimestamp(),
+        'requestTime': ServerValue.timestamp,
         'status': 'pending',
         'priority': 'normal',
-        'estimatedPickupTime': DateTime.now().add(const Duration(minutes: 15)),
+        'estimatedPickupTime': DateTime.now().add(const Duration(minutes: 15)).millisecondsSinceEpoch,
       };
 
-      // Send to pickup queue
+      // Get today's date for the queue path
+      final today = DateTime.now();
+      final dateString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      // Send to pickup queue with date-based path
       await FirebaseDatabase.instance
-          .ref('pickup_queue')
+          .ref('pickupQueue/$dateString')
           .push()
           .set(pickupRequest);
 

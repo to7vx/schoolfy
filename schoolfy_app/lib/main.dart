@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,13 +11,25 @@ import 'screens/students_page.dart';
 import 'screens/authorized_guardians_page.dart';
 import 'screens/settings_page.dart';
 import 'screens/profile_setup_page.dart';
+import 'screens/notifications_page.dart';
+import 'services/notification_service.dart';
 
+// Background message handler (must be top-level function)
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Handling background message: ${message.notification?.title}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Set up background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
   runApp(const MyApp());
 }
 
@@ -593,12 +606,34 @@ class _MainNavScreen extends StatefulWidget {
 
 class _MainNavScreenState extends State<_MainNavScreen> {
   int _selectedIndex = 0;
+  static bool _notificationsInitialized = false; // Static to persist across rebuilds
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize notification service only once globally
+    if (!_notificationsInitialized) {
+      _initializeNotifications();
+    }
+  }
+
+  Future<void> _initializeNotifications() async {
+    try {
+      _notificationsInitialized = true;
+      final notificationService = NotificationService();
+      await notificationService.initialize();
+    } catch (e) {
+      print('Error initializing notifications: $e');
+      _notificationsInitialized = false; // Reset on error so it can retry
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final pages = [
       HomePage(students: widget.students),
       const StudentsPage(),
+      const NotificationsPage(),
       const AuthorizedGuardiansPage(),
       const SettingsPage(),
     ];
@@ -613,6 +648,7 @@ class _MainNavScreenState extends State<_MainNavScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notifications'),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Guardians'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
         ],
