@@ -17,6 +17,7 @@ class StudentManagementScreen extends StatefulWidget {
 class _StudentManagementScreenState extends State<StudentManagementScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _gradeNameController = TextEditingController();
   
   String _searchQuery = '';
   String _selectedGrade = '';
@@ -24,6 +25,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _gradeNameController.dispose();
     super.dispose();
   }
 
@@ -63,6 +65,16 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                   ],
                 ),
               ),
+              ElevatedButton.icon(
+                onPressed: _showGradeManagementDialog,
+                icon: const Icon(Icons.grade),
+                label: const Text('Manage Grades'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.successColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: () => _showAddStudentDialog(),
                 icon: const Icon(Icons.add),
@@ -311,14 +323,95 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                   validator: (value) => value?.isEmpty ?? true ? 'Name is required' : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: gradeController,
-                  decoration: InputDecoration(
-                    labelText: l10n.grade,
-                    prefixIcon: const Icon(Icons.school),
-                    hintText: 'e.g., 1A, 2B, 3C',
-                  ),
-                  validator: (value) => value?.isEmpty ?? true ? 'Grade is required' : null,
+                // Grade Dropdown with grades from Firestore
+                StreamBuilder<QuerySnapshot>(
+                  stream: _firestore.collection('grades').orderBy('name').snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return TextFormField(
+                        controller: gradeController,
+                        decoration: InputDecoration(
+                          labelText: l10n.grade,
+                          prefixIcon: const Icon(Icons.school),
+                          hintText: 'Error loading grades',
+                          errorText: 'Failed to load grades',
+                        ),
+                      );
+                    }
+
+                    List<String> availableGrades = [];
+                    if (snapshot.hasData) {
+                      availableGrades = snapshot.data!.docs
+                          .map((doc) => (doc.data() as Map<String, dynamic>)['name'] as String)
+                          .toList();
+                    }
+
+                    // If no grades exist, show text field with button to manage grades
+                    if (availableGrades.isEmpty) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: gradeController,
+                            decoration: InputDecoration(
+                              labelText: l10n.grade,
+                              prefixIcon: const Icon(Icons.school),
+                              hintText: 'No grades available',
+                              suffixIcon: IconButton(
+                                icon: const Icon(Icons.settings),
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // Close current dialog
+                                  _showGradeManagementDialog(); // Open grade management
+                                },
+                                tooltip: 'Manage Grades',
+                              ),
+                            ),
+                            validator: (value) => value?.isEmpty ?? true ? 'Grade is required' : null,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Click the settings icon to add grades first',
+                            style: TextStyle(
+                              color: Colors.orange[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    // Ensure current grade is in the list (for editing existing students)
+                    String? selectedGrade = gradeController.text.isNotEmpty ? gradeController.text : null;
+                    if (selectedGrade != null && !availableGrades.contains(selectedGrade)) {
+                      availableGrades.add(selectedGrade);
+                    }
+
+                    return DropdownButtonFormField<String>(
+                      value: selectedGrade,
+                      decoration: InputDecoration(
+                        labelText: l10n.grade,
+                        prefixIcon: const Icon(Icons.school),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.settings, size: 18),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close current dialog
+                            _showGradeManagementDialog(); // Open grade management
+                          },
+                          tooltip: 'Manage Grades',
+                        ),
+                      ),
+                      items: availableGrades.map((grade) => DropdownMenuItem(
+                        value: grade,
+                        child: Text(grade),
+                      )).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          gradeController.text = value ?? '';
+                        });
+                      },
+                      validator: (value) => value?.isEmpty ?? true ? 'Please select a grade' : null,
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -512,6 +605,388 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    }
+  }
+
+  // Grade Management Dialog
+  void _showGradeManagementDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.grade, color: AppTheme.primaryColor),
+            SizedBox(width: 8),
+            Text('Manage Grades'),
+          ],
+        ),
+        content: SizedBox(
+          width: 500,
+          height: 400,
+          child: Column(
+            children: [
+              // Add new grade section
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _gradeNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'New Grade Name',
+                        hintText: 'e.g., Grade 1A, Grade 2B',
+                        prefixIcon: Icon(Icons.school),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: () => _addGradeFromTextField(),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.successColor,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              
+              // Existing grades list
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Existing Grades:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _firestore.collection('grades').orderBy('name').snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Error: ${snapshot.error}'),
+                      );
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.school, size: 48, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              'No grades available',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Add your first grade above',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = snapshot.data!.docs[index];
+                        final gradeData = doc.data() as Map<String, dynamic>;
+                        final gradeName = gradeData['name'] ?? '';
+                        final gradeDescription = gradeData['description'] ?? '';
+                        final createdAt = gradeData['createdAt'] as Timestamp?;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                              child: Text(
+                                gradeName.isNotEmpty ? gradeName[0].toUpperCase() : 'G',
+                                style: const TextStyle(
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              gradeName,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (gradeDescription.isNotEmpty)
+                                  Text(gradeDescription),
+                                if (createdAt != null)
+                                  Text(
+                                    'Created: ${createdAt.toDate().toString().split(' ')[0]}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, size: 18),
+                                  onPressed: () => _editGrade(doc.id, gradeData),
+                                  tooltip: 'Edit Grade',
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                  onPressed: () => _deleteGrade(doc.id, gradeName),
+                                  tooltip: 'Delete Grade',
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addGradeFromTextField() async {
+    final gradeName = _gradeNameController.text.trim();
+    if (gradeName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a grade name'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    await _addGradeToFirestore(gradeName, '');
+    _gradeNameController.clear(); // Clear the text field after adding
+  }
+
+  Future<void> _addGradeToFirestore(String name, String description) async {
+    try {
+      await _firestore.collection('grades').add({
+        'name': name,
+        'description': description,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isActive': true,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Grade "$name" added successfully'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add grade: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _editGrade(String gradeId, Map<String, dynamic> gradeData) {
+    final nameController = TextEditingController(text: gradeData['name'] ?? '');
+    final descriptionController = TextEditingController(text: gradeData['description'] ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Grade'),
+        content: SizedBox(
+          width: 300,
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Grade Name *',
+                    prefixIcon: Icon(Icons.school),
+                  ),
+                  validator: (value) => value?.isEmpty ?? true ? 'Grade name is required' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (Optional)',
+                    prefixIcon: Icon(Icons.description),
+                  ),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                try {
+                  await _firestore.collection('grades').doc(gradeId).update({
+                    'name': nameController.text.trim(),
+                    'description': descriptionController.text.trim(),
+                    'updatedAt': FieldValue.serverTimestamp(),
+                  });
+
+                  if (mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Grade "${nameController.text}" updated successfully'),
+                        backgroundColor: AppTheme.successColor,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to update grade: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.warningColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteGrade(String gradeId, String gradeName) async {
+    // Check if grade is being used by any students
+    final studentsUsingGrade = await _firestore
+        .collection('students')
+        .where('grade', isEqualTo: gradeName)
+        .get();
+
+    if (!mounted) return;
+
+    if (studentsUsingGrade.docs.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Cannot Delete Grade'),
+          content: Text(
+            'This grade is currently assigned to ${studentsUsingGrade.docs.length} student(s). '
+            'Please reassign or remove these students first.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Confirm deletion
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: Text('Are you sure you want to delete the grade "$gradeName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _firestore.collection('grades').doc(gradeId).delete();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Grade "$gradeName" deleted successfully'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete grade: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
