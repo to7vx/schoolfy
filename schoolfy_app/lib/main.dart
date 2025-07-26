@@ -400,18 +400,194 @@ class AuthGate extends StatelessWidget {
                       final linkedStudentIds = List<String>.from(userData?['linkedStudents'] ?? []);
                       
                       if (linkedStudentIds.isEmpty) {
-                        return const Scaffold(
+                        return Scaffold(
+                          backgroundColor: AppTheme.backgroundColor,
+                          appBar: AppBar(
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            automaticallyImplyLeading: false,
+                            actions: [
+                              Container(
+                                margin: const EdgeInsets.only(right: 16),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.errorColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: IconButton(
+                                  onPressed: () async {
+                                    try {
+                                      await FirebaseAuth.instance.signOut();
+                                      if (context.mounted) {
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                                          (route) => false,
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error signing out: $e'),
+                                            backgroundColor: AppTheme.errorColor,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: Icon(
+                                    Icons.logout_rounded,
+                                    color: AppTheme.errorColor,
+                                  ),
+                                  tooltip: 'Sign Out',
+                                ),
+                              ),
+                            ],
+                          ),
                           body: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.school, size: 64, color: Colors.grey),
-                                SizedBox(height: 16),
-                                Text('No linked students yet'),
-                                SizedBox(height: 8),
-                                Text('Contact your school administrator to link your children.',
-                                    style: TextStyle(color: Colors.grey)),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppTheme.spacingXXL),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Modern Icon Container
+                                  Container(
+                                    width: 120,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(60),
+                                    ),
+                                    child: Icon(
+                                      Icons.school_rounded,
+                                      size: 60,
+                                      color: AppTheme.primaryColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingXXL),
+                                  
+                                  // Title
+                                  Text(
+                                    'No Students Linked Yet',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppTheme.textPrimary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingM),
+                                  
+                                  // Description
+                                  Text(
+                                    'Contact your school administrator to link your children to your account.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppTheme.textSecondary,
+                                      height: 1.5,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingXXL),
+                                  
+                                  // Info Card
+                                  Container(
+                                    padding: const EdgeInsets.all(AppTheme.spacingL),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.infoColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                                      border: Border.all(
+                                        color: AppTheme.infoColor.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.infoColor.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(
+                                            Icons.info_outline_rounded,
+                                            color: AppTheme.infoColor,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: AppTheme.spacingM),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'What to do next?',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.textPrimary,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Provide your phone number to your school\'s admin to get your children linked to this account.',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: AppTheme.textSecondary,
+                                                  height: 1.4,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppTheme.spacingXXL),
+                                  
+                                  // Sign Out Button
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () async {
+                                        try {
+                                          await FirebaseAuth.instance.signOut();
+                                          if (context.mounted) {
+                                            Navigator.of(context).pushAndRemoveUntil(
+                                              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                                              (route) => false,
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text('Error signing out: $e'),
+                                                backgroundColor: AppTheme.errorColor,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppTheme.errorColor,
+                                        side: BorderSide(color: AppTheme.errorColor),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                        ),
+                                      ),
+                                      icon: const Icon(Icons.logout_rounded),
+                                      label: const Text(
+                                        'Sign Out & Try Different Account',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
