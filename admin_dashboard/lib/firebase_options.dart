@@ -38,53 +38,51 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCAG_cWk1is1AtdgIltXEiyEcACrDQ_3K8',
-    appId: '1:477357689953:web:67a068b24743c359aeae20',
+    apiKey: 'AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw',
+    appId: '1:477357689953:web:cd6e01e525cc4222aeae20',
     messagingSenderId: '477357689953',
     projectId: 'schoolfy-706ff',
     authDomain: 'schoolfy-706ff.firebaseapp.com',
     databaseURL: 'https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'schoolfy-706ff.firebasestorage.app',
-    measurementId: 'G-N90V441LVJ',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBBmzUH1u7SWL6jXVNdqYw8rHNxHcvJIgI',
-    appId: '1:1046994509305:android:7a3e7a45c6f47e4dd8e70e',
-    messagingSenderId: '1046994509305',
+    apiKey: 'AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw',
+    appId: '1:477357689953:android:cd6e01e525cc4222aeae20',
+    messagingSenderId: '477357689953',
     projectId: 'schoolfy-706ff',
     databaseURL: 'https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app',
-    storageBucket: 'schoolfy-706ff.appspot.com',
+    storageBucket: 'schoolfy-706ff.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBJ-mP5Y7x2j9hTVKv4QG8Y7mY-6rGdBE4',
-    appId: '1:1046994509305:ios:3c9e7d4e5f6g8h9id8e70e',
-    messagingSenderId: '1046994509305',
+    apiKey: 'AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw',
+    appId: '1:477357689953:ios:cd6e01e525cc4222aeae20',
+    messagingSenderId: '477357689953',
     projectId: 'schoolfy-706ff',
     databaseURL: 'https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app',
-    storageBucket: 'schoolfy-706ff.appspot.com',
+    storageBucket: 'schoolfy-706ff.firebasestorage.app',
     iosBundleId: 'com.schoolfy.adminDashboard',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBJ-mP5Y7x2j9hTVKv4QG8Y7mY-6rGdBE4',
-    appId: '1:1046994509305:macos:4d9f8g0h1i2j3k4ld8e70e',
-    messagingSenderId: '1046994509305',
+    apiKey: 'AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw',
+    appId: '1:477357689953:macos:cd6e01e525cc4222aeae20',
+    messagingSenderId: '477357689953',
     projectId: 'schoolfy-706ff',
     databaseURL: 'https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app',
-    storageBucket: 'schoolfy-706ff.appspot.com',
+    storageBucket: 'schoolfy-706ff.firebasestorage.app',
     iosBundleId: 'com.schoolfy.adminDashboard',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCAG_cWk1is1AtdgIltXEiyEcACrDQ_3K8',
-    appId: '1:477357689953:web:67a068b24743c359aeae20',
+    apiKey: 'AIzaSyB73K2ABdwuqBLnVLqZ1zzZAmCDNx1ZnUw',
+    appId: '1:477357689953:web:cd6e01e525cc4222aeae20',
     messagingSenderId: '477357689953',
     projectId: 'schoolfy-706ff',
     authDomain: 'schoolfy-706ff.firebaseapp.com',
     databaseURL: 'https://schoolfy-706ff-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'schoolfy-706ff.firebasestorage.app',
-    measurementId: 'G-N90V441LVJ',
   );
 }

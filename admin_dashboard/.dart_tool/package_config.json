@@ -152,6 +152,24 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "firebase_messaging",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_messaging-15.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "firebase_messaging_platform_interface",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_messaging_platform_interface-4.6.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
+      "name": "firebase_messaging_web",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_messaging_web-3.10.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "flutter",
       "rootUri": "file:///F:/apps%20and%20drivers/real%20flutter%20sdk/flutter/packages/flutter",
       "packageUri": "lib/",
@@ -186,6 +204,12 @@
       "rootUri": "file:///F:/apps%20and%20drivers/real%20flutter%20sdk/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.7"
+    },
+    {
+      "name": "http",
+      "rootUri": "file:///C:/Users/Admin/AppData/Local/Pub/Cache/hosted/pub.dev/http-1.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "http_parser",
@@ -413,12 +437,12 @@
       "name": "admin_dashboard",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "3.8"
     }
   ],
   "generator": "pub",
   "generatorVersion": "3.8.1",
   "flutterRoot": "file:///F:/apps%20and%20drivers/real%20flutter%20sdk/flutter",
-  "flutterVersion": "3.32.4",
+  "flutterVersion": "3.32.7",
   "pubCache": "file:///C:/Users/Admin/AppData/Local/Pub/Cache"
 }

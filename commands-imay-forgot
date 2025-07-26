@@ -9,19 +9,28 @@
 
 #http://localhost:8081/
 
-#admin@schoolfy.com
-#Admin123 
+# Admin Dashboard Commands
+cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d web-server --web-port=8080
 
+# Mobile App Commands  
+cd "f:\Schoolfy all on one\mobile app 2\schoolfy_app" && flutter run
 
+# Pickup Display Commands
+cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8081
+
+# Firebase Commands
+firebase login
 firebase deploy --only firestore:rules
-npx firebase deploy --only firestore:rules
-npm install -g firebase-tools
+firebase deploy --only firestore:indexes
+firebase deploy --only hosting
 
+# Flutter Commands
+flutter clean
+flutter pub get
+flutter build web
 
-
-
-
+# Git Commands
 git status
-
-
-
+git add .
+git commit -m "message"
+git push origin main

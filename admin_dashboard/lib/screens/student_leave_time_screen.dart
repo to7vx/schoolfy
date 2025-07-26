@@ -176,7 +176,36 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestore.collection('students').snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        // Handle errors
+        if (snapshot.hasError) {
+          print('Error in stats stream: ${snapshot.error}');
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red.shade600),
+                const SizedBox(width: 8),
+                Text(
+                  'Error loading statistics. Please refresh the page.',
+                  style: TextStyle(color: Colors.red.shade700),
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () => setState(() {}),
+                  child: const Text('Refresh'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Handle loading state
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -419,21 +448,49 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
           .where('grade', isEqualTo: grade)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Text('Loading...');
+        // Handle errors
+        if (snapshot.hasError) {
+          print('Error in grade subtitle stream for $grade: ${snapshot.error}');
+          return Text(
+            'Error loading grade data',
+            style: TextStyle(color: Colors.red.shade600, fontSize: 12),
+          );
+        }
+
+        // Handle loading and no data
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+          return const Text('Loading...', style: TextStyle(fontSize: 12));
+        }
 
         final totalStudents = snapshot.data!.docs.length;
         final leftStudents = snapshot.data!.docs
-            .where((doc) => (doc.data() as Map<String, dynamic>)['leaveStatus'] == 'left')
+            .where((doc) {
+              try {
+                final data = doc.data() as Map<String, dynamic>;
+                return data['leaveStatus'] == 'left';
+              } catch (e) {
+                print('Error reading student data: $e');
+                return false;
+              }
+            })
             .length;
         final inSchool = totalStudents - leftStudents;
 
         String timeText = '';
         if (gradeData['lastSent'] != null) {
-          final lastSent = (gradeData['lastSent'] as Timestamp).toDate();
-          timeText = ' • Last sent: ${_formatTime(lastSent)}';
+          try {
+            final lastSent = (gradeData['lastSent'] as Timestamp).toDate();
+            timeText = ' • Last sent: ${_formatTime(lastSent)}';
+          } catch (e) {
+            print('Error formatting lastSent time: $e');
+          }
         } else if (gradeData['scheduledTime'] != null) {
-          final scheduled = (gradeData['scheduledTime'] as Timestamp).toDate();
-          timeText = ' • Scheduled: ${_formatTime(scheduled)}';
+          try {
+            final scheduled = (gradeData['scheduledTime'] as Timestamp).toDate();
+            timeText = ' • Scheduled: ${_formatTime(scheduled)}';
+          } catch (e) {
+            print('Error formatting scheduled time: $e');
+          }
         }
 
         return Text(
@@ -590,21 +647,74 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                   .limit(50)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                // Handle errors
+                if (snapshot.hasError) {
+                  print('Error in history stream: ${snapshot.error}');
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, color: Colors.red.shade600, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error loading history',
+                          style: TextStyle(color: Colors.red.shade700, fontSize: 18),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Please check your connection and try again.',
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => setState(() {}),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Handle loading state
+                if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.data!.docs.isEmpty) {
                   return const Center(
-                    child: Text('No leave time history yet'),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history, color: Colors.grey, size: 48),
+                        SizedBox(height: 16),
+                        Text(
+                          'No leave time history yet',
+                          style: TextStyle(color: Colors.grey, fontSize: 18),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'History will appear here when you send leave time notifications',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
-                    final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-                    return _buildHistoryItem(history);
+                    try {
+                      final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                      return _buildHistoryItem(history);
+                    } catch (e) {
+                      print('Error building history item $index: $e');
+                      return ListTile(
+                        leading: Icon(Icons.error, color: Colors.red.shade600),
+                        title: const Text('Error loading this item'),
+                        subtitle: Text('Item $index could not be loaded'),
+                      );
+                    }
                   },
                 );
               },
