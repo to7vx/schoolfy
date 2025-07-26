@@ -27,6 +27,11 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     return names.isNotEmpty ? names[0] : '';
   }
 
+  String _extractLastName(String fullName) {
+    final names = fullName.trim().split(' ');
+    return names.length > 1 ? names.sublist(1).join(' ') : '';
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -38,6 +43,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         final fullName = _fullNameController.text.trim();
         final email = _emailController.text.trim();
         final firstName = _extractFirstName(fullName);
+        final lastName = _extractLastName(fullName);
 
         // Update user document in Firestore
         await FirebaseFirestore.instance
@@ -48,6 +54,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           'fullName': fullName,
           'email': email,
           'firstName': firstName,
+          'lastName': lastName,
           'profileComplete': true,
           'createdAt': FieldValue.serverTimestamp(),
           'lastUpdated': FieldValue.serverTimestamp(),

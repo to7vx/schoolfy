@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../theme/app_theme.dart';
 
 class StudentsPage extends StatefulWidget {
   const StudentsPage({super.key});
@@ -9,1527 +10,409 @@ class StudentsPage extends StatefulWidget {
   State<StudentsPage> createState() => _StudentsPageState();
 }
 
-class _StudentsPageState extends State<StudentsPage> with TickerProviderStateMixin {
+class _StudentsPageState extends State<StudentsPage> {
   final TextEditingController _searchController = TextEditingController();
-  late TabController _tabController;
   String _searchQuery = '';
   String _selectedFilter = 'All';
   String _sortBy = 'Name';
   bool _sortAscending = true;
   
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: 200,
-              floating: false,
-              pinned: true,
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.deepPurple,
-                        Colors.deepPurple.shade700,
-                      ],
-                    ),
+      backgroundColor: AppTheme.backgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          // Modern App Bar
+          SliverAppBar(
+            expandedHeight: 200,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
                   ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 40),
-                          StreamBuilder<DocumentSnapshot>(
-                            stream: FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(FirebaseAuth.instance.currentUser?.uid)
-                                .snapshots(),
-                            builder: (context, snapshot) {
-                              final userData = snapshot.data?.data() as Map<String, dynamic>?;
-                              final linkedStudents = userData?['linkedStudents'] as List? ?? [];
-                              final firstName = userData?['firstName'] ?? 'Guardian';
-                              
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Hi $firstName!',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
-                                    ),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppTheme.spacingXXL),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(FirebaseAuth.instance.currentUser?.uid)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            final userData = snapshot.data?.data() as Map<String, dynamic>?;
+                            final linkedStudents = userData?['linkedStudents'] as List? ?? [];
+                            final firstName = userData?['firstName'] ?? 'Guardian';
+                            
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Students',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${linkedStudents.length} Students',
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Hi $firstName!',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '${linkedStudents.length} student${linkedStudents.length != 1 ? 's' : ''} linked',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Manage your children\'s information',
-                                    style: TextStyle(
-                                      color: Colors.white70,
                                       fontSize: 14,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-          ];
-        },
-        body: Column(
-          children: [
-            // Search and Filter Section
-            Container(
+          ),
+          
+          // Search and Filter Section
+          SliverToBoxAdapter(
+            child: Container(
               color: Colors.white,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTheme.spacingL),
               child: Column(
                 children: [
                   // Search Bar with Sort Button
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search students...',
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _searchQuery = '');
-                                    },
-                                  )
-                                : null,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[100],
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.backgroundColor,
+                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                            boxShadow: AppTheme.softShadow,
                           ),
-                          onChanged: (value) {
-                            setState(() => _searchQuery = value);
-                          },
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Search students...',
+                              hintStyle: TextStyle(color: AppTheme.textTertiary),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: AppTheme.textTertiary,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.clear_rounded,
+                                        color: AppTheme.textTertiary,
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppTheme.spacingM,
+                                vertical: AppTheme.spacingM,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      PopupMenuButton<String>(
-                        icon: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.sort,
-                            color: Colors.deepPurple,
-                          ),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          boxShadow: AppTheme.softShadow,
                         ),
-                        onSelected: (value) {
-                          setState(() {
-                            if (_sortBy == value) {
-                              _sortAscending = !_sortAscending;
-                            } else {
-                              _sortBy = value;
-                              _sortAscending = true;
-                            }
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'Name',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.person),
-                                const SizedBox(width: 8),
-                                const Text('Sort by Name'),
-                                if (_sortBy == 'Name') ...[
-                                  const Spacer(),
-                                  Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
-                                ],
-                              ],
+                        child: PopupMenuButton<String>(
+                          icon: Padding(
+                            padding: const EdgeInsets.all(AppTheme.spacingM),
+                            child: Icon(
+                              Icons.sort_rounded,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
-                          PopupMenuItem(
-                            value: 'Grade',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.school),
-                                const SizedBox(width: 8),
-                                const Text('Sort by Grade'),
-                                if (_sortBy == 'Grade') ...[
-                                  const Spacer(),
-                                  Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                          onSelected: (value) {
+                            setState(() {
+                              if (_sortBy == value) {
+                                _sortAscending = !_sortAscending;
+                              } else {
+                                _sortBy = value;
+                                _sortAscending = true;
+                              }
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 'Name',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.person_rounded),
+                                  const SizedBox(width: 8),
+                                  const Text('Sort by Name'),
+                                  if (_sortBy == 'Name') ...[
+                                    const Spacer(),
+                                    Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                          PopupMenuItem(
-                            value: 'Attendance',
-                            child: Row(
-                              children: [
-                                const Icon(Icons.calendar_today),
-                                const SizedBox(width: 8),
-                                const Text('Sort by Attendance'),
-                                if (_sortBy == 'Attendance') ...[
-                                  const Spacer(),
-                                  Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                            PopupMenuItem(
+                              value: 'Grade',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.school_rounded),
+                                  const SizedBox(width: 8),
+                                  const Text('Sort by Grade'),
+                                  if (_sortBy == 'Grade') ...[
+                                    const Spacer(),
+                                    Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  // Filter Chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterChip('All'),
-                        _buildFilterChip('Grade 1'),
-                        _buildFilterChip('Grade 2'),
-                        _buildFilterChip('Grade 3'),
-                        _buildFilterChip('Grade 4'),
-                        _buildFilterChip('Present'),
-                        _buildFilterChip('Absent'),
-                        _buildFilterChip('High Achiever'),
-                        _buildFilterChip('Needs Attention'),
-                      ],
-                    ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  // Dynamic Filter Chips
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('grades')
+                        .orderBy('name')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      final grades = <String>[];
+                      
+                      if (snapshot.hasData) {
+                        for (var doc in snapshot.data!.docs) {
+                          final gradeData = doc.data() as Map<String, dynamic>;
+                          final gradeName = gradeData['name'] as String?;
+                          if (gradeName != null && gradeName.isNotEmpty) {
+                            grades.add(gradeName);
+                          }
+                        }
+                      }
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildModernFilterChip('All'),
+                            ...grades.map((grade) => _buildModernFilterChip(grade)),
+                            _buildModernFilterChip('Present'),
+                            _buildModernFilterChip('Absent'),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-            // Tab Bar
-            Container(
-              color: Colors.white,
-              child: TabBar(
-                controller: _tabController,
-                labelColor: Colors.deepPurple,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.deepPurple,
-                tabs: const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Attendance'),
-                  Tab(text: 'Reports'),
-                ],
-              ),
+          ),
+          
+          // Students List
+          SliverPadding(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            sliver: StreamBuilder<DocumentSnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser?.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final userData = snapshot.data?.data() as Map<String, dynamic>?;
+                final linkedStudentIds = List<String>.from(userData?['linkedStudents'] ?? []);
+
+                if (linkedStudentIds.isEmpty) {
+                  return SliverFillRemaining(
+                    child: _buildEmptyState(),
+                  );
+                }
+
+                // Fetch student details from students collection
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('students')
+                      .where(FieldPath.documentId, whereIn: linkedStudentIds)
+                      .snapshots(),
+                  builder: (context, studentSnapshot) {
+                    if (studentSnapshot.connectionState == ConnectionState.waiting) {
+                      return const SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    if (studentSnapshot.hasError) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error, size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text('Error loading students: ${studentSnapshot.error}'),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    final allStudents = studentSnapshot.data?.docs.map((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      return {
+                        'studentId': doc.id,
+                        'studentName': data['name'] ?? data['studentName'] ?? '',
+                        'grade': data['grade'] ?? '',
+                        'schoolId': data['schoolId'] ?? '',
+                      };
+                    }).toList() ?? [];
+
+                    // Apply filtering
+                    List<Map<String, dynamic>> filteredStudents = allStudents.where((student) {
+                      // Search filter
+                      if (_searchQuery.isNotEmpty) {
+                        final studentName = (student['studentName'] as String).toLowerCase();
+                        if (!studentName.contains(_searchQuery.toLowerCase())) {
+                          return false;
+                        }
+                      }
+
+                      // Grade filter
+                      if (_selectedFilter != 'All' && _selectedFilter != 'Present' && _selectedFilter != 'Absent') {
+                        final studentGrade = student['grade'] as String;
+                        if (studentGrade != _selectedFilter) {
+                          return false;
+                        }
+                      }
+
+                      // Status filters (Present/Absent) can be implemented later with actual status data
+                      
+                      return true;
+                    }).toList();
+
+                    // Apply sorting
+                    if (_sortBy == 'Name') {
+                      filteredStudents.sort((a, b) {
+                        final nameA = (a['studentName'] as String).toLowerCase();
+                        final nameB = (b['studentName'] as String).toLowerCase();
+                        return _sortAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+                      });
+                    } else if (_sortBy == 'Grade') {
+                      filteredStudents.sort((a, b) {
+                        final gradeA = a['grade'] as String;
+                        final gradeB = b['grade'] as String;
+                        return _sortAscending ? gradeA.compareTo(gradeB) : gradeB.compareTo(gradeA);
+                      });
+                    }
+
+                    if (filteredStudents.isEmpty) {
+                      return SliverFillRemaining(
+                        child: _buildEmptyState(),
+                      );
+                    }
+
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _buildModernStudentCard(filteredStudents[index], index),
+                        childCount: filteredStudents.length,
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-            // Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverviewTab(),
-                  _buildAttendanceTab(),
-                  _buildReportsTab(),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label) {
+  Widget _buildModernFilterChip(String label) {
     final isSelected = _selectedFilter == label;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
+    return Container(
+      margin: const EdgeInsets.only(right: AppTheme.spacingS),
       child: FilterChip(
-        label: Text(label),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppTheme.primaryColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         selected: isSelected,
         onSelected: (selected) {
           setState(() {
             _selectedFilter = selected ? label : 'All';
           });
         },
-        backgroundColor: Colors.grey[100],
-        selectedColor: Colors.deepPurple.shade50,
-        checkmarkColor: Colors.deepPurple,
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.deepPurple : Colors.grey[700],
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        backgroundColor: Colors.white,
+        selectedColor: AppTheme.primaryColor,
+        checkmarkColor: Colors.white,
+        side: BorderSide(
+          color: isSelected ? AppTheme.primaryColor : AppTheme.primaryColor.withOpacity(0.3),
         ),
-      ),
-    );
-  }
-
-  Widget _buildOverviewTab() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser?.uid)
-          .snapshots(),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
-        final linkedStudentIds = List<String>.from(userData?['linkedStudents'] ?? []);
-        
-        if (linkedStudentIds.isEmpty) {
-          return _buildEmptyState();
-        }
-        
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('students')
-              .where(FieldPath.documentId, whereIn: linkedStudentIds)
-              .snapshots(),
-          builder: (context, studentsSnapshot) {
-            if (!studentsSnapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            var students = studentsSnapshot.data!.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return {
-                'id': doc.id,
-                ...data,
-              };
-            }).toList();
-            
-            // Apply search filter
-            if (_searchQuery.isNotEmpty) {
-              students = students.where((student) {
-                final name = student['name']?.toLowerCase() ?? '';
-                final grade = student['grade']?.toLowerCase() ?? '';
-                final schoolId = student['schoolId']?.toLowerCase() ?? '';
-                final query = _searchQuery.toLowerCase();
-                return name.contains(query) || grade.contains(query) || schoolId.contains(query);
-              }).toList();
-            }
-            
-            // Apply grade/status filter
-            if (_selectedFilter != 'All') {
-              students = students.where((student) {
-                if (_selectedFilter.startsWith('Grade')) {
-                  final grade = _selectedFilter.split(' ')[1];
-                  return student['grade']?.startsWith(grade) ?? false;
-                } else if (_selectedFilter == 'Present' || _selectedFilter == 'Absent') {
-                  final index = students.indexOf(student);
-                  final isPresent = index % 2 == 0;
-                  return (_selectedFilter == 'Present') ? isPresent : !isPresent;
-                } else if (_selectedFilter == 'High Achiever') {
-                  // Demo: Students with even index are high achievers
-                  final index = students.indexOf(student);
-                  return index % 3 == 0;
-                } else if (_selectedFilter == 'Needs Attention') {
-                  // Demo: Students with specific pattern need attention
-                  final index = students.indexOf(student);
-                  return index % 4 == 3;
-                }
-                return true;
-              }).toList();
-            }
-            
-            // Apply sorting
-            students.sort((a, b) {
-              int comparison = 0;
-              switch (_sortBy) {
-                case 'Name':
-                  comparison = (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString());
-                  break;
-                case 'Grade':
-                  comparison = (a['grade'] ?? '').toString().compareTo((b['grade'] ?? '').toString());
-                  break;
-                case 'Attendance':
-                  // Demo: sort by attendance percentage (simulated)
-                  final aAttendance = (a['name']?.hashCode ?? 0) % 100;
-                  final bAttendance = (b['name']?.hashCode ?? 0) % 100;
-                  comparison = aAttendance.compareTo(bAttendance);
-                  break;
-              }
-              return _sortAscending ? comparison : -comparison;
-            });
-            
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: students.length,
-              itemBuilder: (context, index) {
-                final student = students[index];
-                return _buildEnhancedStudentCard(student, index);
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildAttendanceTab() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser?.uid)
-          .snapshots(),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
-        final linkedStudentIds = List<String>.from(userData?['linkedStudents'] ?? []);
-        
-        if (linkedStudentIds.isEmpty) {
-          return _buildEmptyState();
-        }
-        
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('students')
-              .where(FieldPath.documentId, whereIn: linkedStudentIds)
-              .snapshots(),
-          builder: (context, studentsSnapshot) {
-            if (!studentsSnapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            final students = studentsSnapshot.data!.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return {
-                'id': doc.id,
-                ...data,
-              };
-            }).toList();
-            
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: students.length,
-              itemBuilder: (context, index) {
-                final student = students[index];
-                return _buildEnhancedAttendanceCard(student, index);
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildEnhancedAttendanceCard(Map<String, dynamic> student, int index) {
-    // Generate mock attendance data for the last 30 days
-    final attendanceData = List.generate(30, (dayIndex) {
-      final random = (student['name']?.hashCode ?? 0) + dayIndex;
-      return {
-        'date': DateTime.now().subtract(Duration(days: 29 - dayIndex)),
-        'status': ['present', 'absent', 'late'][random % 3],
-        'arrivalTime': random % 3 == 0 ? '8:00 AM' : random % 3 == 1 ? 'Absent' : '8:15 AM',
-        'departureTime': random % 3 == 0 ? '3:00 PM' : random % 3 == 1 ? 'Absent' : '3:00 PM',
-      };
-    });
-
-    final presentDays = attendanceData.where((d) => d['status'] == 'present').length;
-    final absentDays = attendanceData.where((d) => d['status'] == 'absent').length;
-    final lateDays = attendanceData.where((d) => d['status'] == 'late').length;
-    final attendanceRate = (presentDays + lateDays) / 30 * 100;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: _getGradeColor(student['grade']),
-                  child: Text(
-                    _getInitials(student['name'] ?? ''),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        student['name'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Grade ${student['grade'] ?? ''}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getAttendanceColor(attendanceRate).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${attendanceRate.toStringAsFixed(1)}%',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: _getAttendanceColor(attendanceRate),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Attendance Stats
-            Row(
-              children: [
-                _buildAttendanceStatCard('Present', presentDays.toString(), Colors.green),
-                _buildAttendanceStatCard('Absent', absentDays.toString(), Colors.red),
-                _buildAttendanceStatCard('Late', lateDays.toString(), Colors.orange),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Mini Calendar View
-            Text(
-              'Last 7 Days',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(7, (dayIndex) {
-                final dayData = attendanceData[attendanceData.length - 7 + dayIndex];
-                final date = dayData['date'] as DateTime;
-                final status = dayData['status'] as String;
-                
-                return Column(
-                  children: [
-                    Text(
-                      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      date.day.toString(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(status),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _getStatusIcon(status),
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                    ),
-                  ],
-                );
-              }),
-            ),
-            const SizedBox(height: 16),
-            
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.calendar_month, size: 18),
-                    label: const Text('Full Calendar'),
-                    onPressed: () => _showFullAttendanceCalendar(student, attendanceData),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.notifications, size: 18),
-                    label: const Text('Set Alerts'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () => _setAttendanceAlerts(student),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAttendanceStatCard(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: color.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getAttendanceColor(double rate) {
-    if (rate >= 95) return Colors.green;
-    if (rate >= 90) return Colors.orange;
-    return Colors.red;
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'present': return Colors.green;
-      case 'absent': return Colors.red;
-      case 'late': return Colors.orange;
-      default: return Colors.grey;
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'present': return Icons.check;
-      case 'absent': return Icons.close;
-      case 'late': return Icons.schedule;
-      default: return Icons.help;
-    }
-  }
-
-  void _showFullAttendanceCalendar(Map<String, dynamic> student, List<Map<String, dynamic>> attendanceData) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${student['name']} - Attendance Calendar',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: attendanceData.length,
-                  itemBuilder: (context, index) {
-                    final dayData = attendanceData[index];
-                    final date = dayData['date'] as DateTime;
-                    final status = dayData['status'] as String;
-                    
-                    return ListTile(
-                      leading: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(status),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _getStatusIcon(status),
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      title: Text(
-                        '${date.day}/${date.month}/${date.year}',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: Text(
-                        'Arrival: ${dayData['arrivalTime']} | Departure: ${dayData['departureTime']}',
-                      ),
-                      trailing: Text(
-                        status.toUpperCase(),
-                        style: TextStyle(
-                          color: _getStatusColor(status),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _setAttendanceAlerts(Map<String, dynamic> student) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Attendance Alerts'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              title: const Text('Daily Attendance'),
-              subtitle: const Text('Get notified about daily attendance'),
-              value: true,
-              onChanged: (value) {},
-            ),
-            SwitchListTile(
-              title: const Text('Absence Alerts'),
-              subtitle: const Text('Alert when student is absent'),
-              value: true,
-              onChanged: (value) {},
-            ),
-            SwitchListTile(
-              title: const Text('Late Arrival Alerts'),
-              subtitle: const Text('Alert when student arrives late'),
-              value: false,
-              onChanged: (value) {},
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Attendance alerts updated')),
-              );
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReportsTab() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser?.uid)
-          .snapshots(),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        
-        final userData = userSnapshot.data?.data() as Map<String, dynamic>?;
-        final linkedStudentIds = List<String>.from(userData?['linkedStudents'] ?? []);
-        
-        if (linkedStudentIds.isEmpty) {
-          return _buildEmptyState();
-        }
-
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('students')
-              .where(FieldPath.documentId, whereIn: linkedStudentIds)
-              .snapshots(),
-          builder: (context, studentsSnapshot) {
-            if (!studentsSnapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            final students = studentsSnapshot.data!.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return {
-                'id': doc.id,
-                ...data,
-              };
-            }).toList();
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Overall Summary Card
-                  _buildOverallSummaryCard(students),
-                  const SizedBox(height: 16),
-                  
-                  // Individual Student Reports
-                  ...students.map((student) => _buildStudentReportCard(student)),
-                  
-                  // Quick Actions
-                  const SizedBox(height: 16),
-                  _buildQuickActionsCard(),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildOverallSummaryCard(List<Map<String, dynamic>> students) {
-    final totalStudents = students.length;
-    final averageAttendance = 94.5; // Mock data
-    final totalAbsences = 3; // Mock data
-    final upcomingEvents = 2; // Mock data
-    
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.deepPurple, Colors.deepPurple.shade700],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.deepPurple.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Family Overview',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildSummaryMetric('Students', totalStudents.toString(), Icons.people),
-              _buildSummaryMetric('Avg Attendance', '${averageAttendance.toStringAsFixed(1)}%', Icons.calendar_today),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildSummaryMetric('Total Absences', totalAbsences.toString(), Icons.warning),
-              _buildSummaryMetric('Upcoming Events', upcomingEvents.toString(), Icons.event),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryMetric(String label, String value, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStudentReportCard(Map<String, dynamic> student) {
-    // Generate mock performance data
-    final subjectScores = {
-      'Math': (student['name']?.hashCode ?? 0) % 20 + 80,
-      'English': (student['name']?.hashCode ?? 0) % 15 + 85,
-      'Science': (student['name']?.hashCode ?? 0) % 25 + 75,
-      'History': (student['name']?.hashCode ?? 0) % 18 + 82,
-    };
-    
-    final averageScore = subjectScores.values.reduce((a, b) => a + b) / subjectScores.length;
-    final attendanceRate = ((student['name']?.hashCode ?? 0) % 10 + 90).toDouble();
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: _getGradeColor(student['grade']),
-                  child: Text(
-                    _getInitials(student['name'] ?? ''),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        student['name'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Grade ${student['grade'] ?? ''} • Overall: ${averageScore.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getPerformanceColor(averageScore).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _getPerformanceGrade(averageScore),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: _getPerformanceColor(averageScore),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Subject Performance
-                const Text(
-                  'Subject Performance',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...subjectScores.entries.map((entry) => 
-                  _buildSubjectScore(entry.key, entry.value)
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Quick Stats
-                Row(
-                  children: [
-                    _buildQuickReportStat('Attendance', '${attendanceRate.toStringAsFixed(1)}%', 
-                      _getAttendanceColor(attendanceRate)),
-                    _buildQuickReportStat('Assignments', '12/14', Colors.blue),
-                    _buildQuickReportStat('Behavior', 'Good', Colors.green),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.trending_up, size: 16),
-                        label: const Text('Detailed Report'),
-                        onPressed: () => _showDetailedReport(student),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.share, size: 16),
-                        label: const Text('Share'),
-                        onPressed: () => _shareStudentReport(student),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSubjectScore(String subject, int score) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 60,
-            child: Text(
-              subject,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: score / 100,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(
-                _getPerformanceColor(score.toDouble()),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$score%',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: _getPerformanceColor(score.toDouble()),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickReportStat(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: color.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionsCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Quick Actions',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildQuickActionChip('Export All Reports', Icons.file_download, () => _exportAllReports()),
-              _buildQuickActionChip('Schedule Meeting', Icons.calendar_today, () => _scheduleMeeting()),
-              _buildQuickActionChip('View Calendar', Icons.event, () => _viewCalendar()),
-              _buildQuickActionChip('Send Message', Icons.message, () => _sendMessage()),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionChip(String label, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.deepPurple.shade50,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: Colors.deepPurple),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.deepPurple,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getPerformanceColor(double score) {
-    if (score >= 90) return Colors.green;
-    if (score >= 80) return Colors.blue;
-    if (score >= 70) return Colors.orange;
-    return Colors.red;
-  }
-
-  String _getPerformanceGrade(double score) {
-    if (score >= 90) return 'A';
-    if (score >= 80) return 'B';
-    if (score >= 70) return 'C';
-    if (score >= 60) return 'D';
-    return 'F';
-  }
-
-  void _showDetailedReport(Map<String, dynamic> student) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${student['name']} - Detailed Report'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 300,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Academic Trends', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('• Math: Improving steadily (+5% this month)'),
-                const Text('• English: Consistent performance'),
-                const Text('• Science: Excellent progress (+8% this month)'),
-                const Text('• History: Needs attention (-2% this month)'),
-                const SizedBox(height: 16),
-                
-                const Text('Attendance Analysis', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('• Total Days: 180'),
-                const Text('• Present: 172 days (95.6%)'),
-                const Text('• Absent: 8 days'),
-                const Text('• Late: 3 times'),
-                const SizedBox(height: 16),
-                
-                const Text('Teacher Comments', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                const Text('"Shows excellent participation in class discussions and demonstrates strong problem-solving skills."'),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _shareStudentReport(Map<String, dynamic> student) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Sharing ${student['name']}\'s report...'),
-        backgroundColor: Colors.blue,
-      ),
-    );
-  }
-
-  void _exportAllReports() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Exporting all student reports...')),
-    );
-  }
-
-  void _scheduleMeeting() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening meeting scheduler...')),
-    );
-  }
-
-  void _viewCalendar() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening school calendar...')),
-    );
-  }
-
-  void _sendMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening message composer...')),
-    );
-  }
-
-  Widget _buildEnhancedStudentCard(Map<String, dynamic> student, int index) {
-    final isPresent = index % 2 == 0; // Demo: alternating presence
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // Student Avatar
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundColor: _getGradeColor(student['grade']),
-                      child: Text(
-                        _getInitials(student['name'] ?? ''),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -2,
-                      right: -2,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: isPresent ? Colors.green : Colors.red,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                // Student Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        student['name'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Grade ${student['grade'] ?? ''}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Status Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isPresent ? Colors.green.shade50 : Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isPresent ? Colors.green.shade200 : Colors.red.shade200,
-                    ),
-                  ),
-                  child: Text(
-                    isPresent ? 'Present' : 'Absent',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isPresent ? Colors.green.shade700 : Colors.red.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // Quick Stats
-            Row(
-              children: [
-                _buildQuickStat('Attendance', '96%', Colors.green),
-                _buildQuickStat('Grade', 'A-', Colors.blue),
-                _buildQuickStat('Behavior', 'Good', Colors.orange),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.visibility, size: 18),
-                    label: const Text('View Details'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.deepPurple,
-                      side: const BorderSide(color: Colors.deepPurple),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () => _showStudentDetailsDialog(student),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.message, size: 18),
-                    label: const Text('Contact'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () => _contactTeacher(student),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickStat(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: color.withOpacity(0.7),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1537,51 +420,210 @@ class _StudentsPageState extends State<StudentsPage> with TickerProviderStateMix
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.school_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No students linked yet',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingXXL),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(60),
+              ),
+              child: Icon(
+                Icons.school_rounded,
+                size: 60,
+                color: AppTheme.primaryColor.withOpacity(0.5),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Contact your school to link your children',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
+            const SizedBox(height: AppTheme.spacingXXL),
+            Text(
+              'No students linked yet',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: AppTheme.spacingM),
+            Text(
+              'Contact your school to link your children to your account',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Color _getGradeColor(String? grade) {
-    if (grade == null) return Colors.grey;
-    final gradeNum = int.tryParse(grade.substring(0, 1)) ?? 0;
-    switch (gradeNum) {
-      case 1:
-        return Colors.purple;
-      case 2:
-        return Colors.blue;
-      case 3:
-        return Colors.green;
-      case 4:
-        return Colors.orange;
-      default:
-        return Colors.deepPurple;
-    }
+  Widget _buildModernStudentCard(Map<String, dynamic> student, int index) {
+    final studentName = student['studentName'] ?? 'Unknown Student';
+    final grade = student['grade'] ?? 'N/A';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+          onTap: () => _showStudentDetails(context, student),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            child: Row(
+              children: [
+                // Modern Avatar
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _getModernAvatarColor(index),
+                        _getModernAvatarColor(index).withOpacity(0.7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(studentName),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacingL),
+                
+                // Student Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        studentName,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              grade,
+                              style: TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 14,
+                            color: AppTheme.textTertiary,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Al-Noor Elementary',
+                              style: TextStyle(
+                                color: AppTheme.textTertiary,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Status and Action
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.successColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppTheme.successColor.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: AppTheme.successColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Active',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.successColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: AppTheme.textTertiary,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getModernAvatarColor(int index) {
+    const colors = [
+      AppTheme.primaryColor,
+      AppTheme.secondaryColor,
+      AppTheme.successColor,
+      AppTheme.warningColor,
+      AppTheme.infoColor,
+    ];
+    return colors[index % colors.length];
   }
 
   String _getInitials(String name) {
@@ -1593,351 +635,175 @@ class _StudentsPageState extends State<StudentsPage> with TickerProviderStateMix
     return name[0];
   }
 
-  void _showStudentDetailsDialog(Map<String, dynamic> student) {
-    showDialog(
+  void _showStudentDetails(BuildContext context, Map<String, dynamic> student) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildStudentDetailsSheet(context, student),
+    );
+  }
+
+  Widget _buildStudentDetailsSheet(BuildContext context, Map<String, dynamic> student) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(student['studentName'] ?? ''),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundColor: Colors.white,
-                      child: Text(
-                        _getInitials(student['name'] ?? ''),
-                        style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            student['name'] ?? '',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Grade ${student['grade'] ?? ''}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                const SizedBox(width: AppTheme.spacingM),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Basic Information
-                      _buildDetailSection('Basic Information', [
-                        _buildDetailRow('Student ID', student['schoolId'] ?? 'N/A'),
-                        _buildDetailRow('Grade', student['grade'] ?? 'N/A'),
-                        _buildDetailRow('Status', 'Active'),
-                        _buildDetailRow('Enrollment Date', 'Sep 1, 2024'),
-                      ]),
-                      
-                      // Academic Performance
-                      _buildDetailSection('Academic Performance', [
-                        _buildDetailRow('Overall GPA', '3.8/4.0'),
-                        _buildDetailRow('Class Rank', '15/30'),
-                        _buildDetailRow('Attendance Rate', '96%'),
-                        _buildDetailRow('Behavior Score', 'Excellent'),
-                      ]),
-                      
-                      // Health Information
-                      _buildDetailSection('Health Information', [
-                        _buildDetailRow('Allergies', 'None reported'),
-                        _buildDetailRow('Medical Conditions', 'None'),
-                        _buildDetailRow('Emergency Contact', '+1234567890'),
-                        _buildDetailRow('Doctor', 'Dr. Smith'),
-                      ]),
-                      
-                      // Recent Activity
-                      _buildDetailSection('Recent Activity', [
-                        _buildActivityItem('Submitted Math Assignment', '2 hours ago'),
-                        _buildActivityItem('Participated in Science Fair', '1 day ago'),
-                        _buildActivityItem('Parent-Teacher Conference', '3 days ago'),
-                      ]),
+                      Text(
+                        student['studentName'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Grade ${student['grade'] ?? ''}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              // Action Buttons
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.print),
-                        label: const Text('Export Report'),
-                        onPressed: () => _exportStudentReport(student),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.message),
-                        label: const Text('Contact Teacher'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => _contactTeacher(student),
-                      ),
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailSection(
+                    'Student Information',
+                    [
+                      _buildDetailItem('Full Name', student['studentName'] ?? ''),
+                      _buildDetailItem('Grade', student['grade'] ?? ''),
+                      _buildDetailItem('School ID', student['schoolId'] ?? ''),
+                      _buildDetailItem('Status', 'Active'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildDetailSection(
+                    'School Information',
+                    [
+                      _buildDetailItem('School', 'Al-Noor Elementary School'),
+                      _buildDetailItem('Address', 'Riyadh, Saudi Arabia'),
+                      _buildDetailItem('Phone', '+966114567890'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildDetailSection(
+                    'Attendance',
+                    [
+                      _buildDetailItem('Today', 'Present'),
+                      _buildDetailItem('This Week', '5/5 days'),
+                      _buildDetailItem('This Month', '20/22 days'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDetailSection(String title, List<Widget> children) {
+  Widget _buildDetailSection(String title, List<Widget> items) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.deepPurple,
+            color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            children: children,
-          ),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        ...items,
       ],
     );
   }
 
-  Widget _buildActivityItem(String activity, String time) {
+  Widget _buildDetailItem(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: Colors.deepPurple,
-              shape: BoxShape.circle,
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondary,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              activity,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _contactTeacher(Map<String, dynamic> student) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Contact Teacher'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Choose how you\'d like to contact ${student['name']}\'s teacher:'),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.email),
-              title: const Text('Send Email'),
-              subtitle: const Text('teacher@school.edu'),
-              onTap: () {
-                Navigator.pop(context);
-                _sendEmail(student);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.phone),
-              title: const Text('Call Teacher'),
-              subtitle: const Text('+1 (555) 123-4567'),
-              onTap: () {
-                Navigator.pop(context);
-                _callTeacher(student);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.chat),
-              title: const Text('School Messenger'),
-              subtitle: const Text('Send via school app'),
-              onTap: () {
-                Navigator.pop(context);
-                _sendSchoolMessage(student);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _sendEmail(Map<String, dynamic> student) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening email for ${student['name']}\'s teacher...'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _callTeacher(Map<String, dynamic> student) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling ${student['name']}\'s teacher...'),
-        backgroundColor: Colors.blue,
-      ),
-    );
-  }
-
-  void _sendSchoolMessage(Map<String, dynamic> student) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening school messenger for ${student['name']}...'),
-        backgroundColor: Colors.deepPurple,
-      ),
-    );
-  }
-
-  void _exportStudentReport(Map<String, dynamic> student) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export Report'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Export ${student['name']}\'s report as:'),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.picture_as_pdf),
-              title: const Text('PDF Report'),
-              onTap: () {
-                Navigator.pop(context);
-                _exportAsPDF(student);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.table_chart),
-              title: const Text('Excel Spreadsheet'),
-              onTap: () {
-                Navigator.pop(context);
-                _exportAsExcel(student);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _exportAsPDF(Map<String, dynamic> student) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Exporting ${student['name']}\'s report as PDF...'),
-        backgroundColor: Colors.orange,
-      ),
-    );
-  }
-
-  void _exportAsExcel(Map<String, dynamic> student) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Exporting ${student['name']}\'s report as Excel...'),
-        backgroundColor: Colors.green,
       ),
     );
   }

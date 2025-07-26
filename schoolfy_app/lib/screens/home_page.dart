@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
@@ -233,348 +234,171 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'My Students',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => FirebaseAuth.instance.signOut(),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      backgroundColor: Colors.grey[50],
-      body: widget.students.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.school_outlined,
-                    size: 80,
-                    color: Colors.grey[400],
+      backgroundColor: AppTheme.backgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          // Modern App Bar
+          SliverAppBar(
+            expandedHeight: 200,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No students linked yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppTheme.spacingXXL),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    firstName != null ? 'Welcome back,' : 'Welcome back!',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    firstName ?? 'Guardian',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${widget.students.length} student${widget.students.length != 1 ? 's' : ''} linked',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                onPressed: () => _showNotificationsSheet(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Contact your school to link your children',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            )
-          : Column(
-              children: [
-                // Header with student count and school info
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple,
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(24),
-                      bottomRight: Radius.circular(24),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        firstName != null ? 'Welcome back, $firstName!' : 'Welcome back!',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${widget.students.length} student${widget.students.length != 1 ? 's' : ''} linked',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Students list
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: widget.students.length,
-                    itemBuilder: (context, index) {
-                      final student = widget.students[index];
-                      return _buildStudentCard(student, index);
-                    },
-                  ),
-                ),
-              ],
             ),
-    );
-  }
-
-  Widget _buildStudentCard(Map<String, dynamic> student, int index) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Student info row
-          Row(
-            children: [
-              // Student avatar
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: _getAvatarColor(index),
-                    child: Text(
-                      _getInitials(student['studentName'] ?? ''),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+          
+          // Empty State or Students List
+          widget.students.isEmpty
+              ? SliverFillRemaining(
+                  child: _buildEmptyState(),
+                )
+              : SliverPadding(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildModernStudentCard(widget.students[index], index),
+                      childCount: widget.students.length,
                     ),
                   ),
-                  Positioned(
-                    bottom: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        student['grade'] ?? '',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              // Student name and info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      student['studentName'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.school,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Grade ${student['grade'] ?? ''}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Al-Noor Elementary School',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
-              ),
-              // Status indicator
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      size: 16,
-                      color: Colors.green.shade600,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Linked',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Quick info cards
-          Row(
-            children: [
-              _buildInfoCard(
-                icon: Icons.access_time,
-                label: 'Leave Time',
-                value: _gradeLeaveTime[student['grade']] ?? '8:00 AM',
-                color: Colors.blue,
-              ),
-              const SizedBox(width: 12),
-              _buildInfoCard(
-                icon: Icons.person,
-                label: 'Status',
-                value: 'Present',
-                color: Colors.green,
-              ),
-              const SizedBox(width: 12),
-              _buildInfoCard(
-                icon: Icons.directions_car,
-                label: 'Pickup',
-                value: 'Ready',
-                color: Colors.orange,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Action buttons
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: Icon(_pendingPickupRequests.contains(student['studentId']) 
-                      ? Icons.schedule 
-                      : Icons.notifications_active),
-                  label: Text(_pendingPickupRequests.contains(student['studentId'])
-                      ? 'Request Sent'
-                      : 'Request Pickup'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _pendingPickupRequests.contains(student['studentId'])
-                        ? Colors.grey
-                        : Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => _sendPickupRequest(student),
-                ),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.info_outline),
-                label: const Text('Details'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.deepPurple,
-                  side: const BorderSide(color: Colors.deepPurple),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () => _showStudentDetails(context, student),
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingXXL),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: color,
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(60),
+              ),
+              child: Icon(
+                Icons.school_rounded,
+                size: 60,
+                color: AppTheme.primaryColor.withOpacity(0.5),
               ),
             ),
+            const SizedBox(height: AppTheme.spacingXXL),
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: color.withOpacity(0.7),
+              'No students linked yet',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Text(
+              'Contact your school to link your children to your account',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppTheme.spacingXXL),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Could navigate to a help screen or contact info
+              },
+              icon: const Icon(Icons.support_agent_rounded),
+              label: const Text('Contact Support'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingXXL,
+                  vertical: AppTheme.spacingL,
+                ),
               ),
             ),
           ],
@@ -583,21 +407,296 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Color _getAvatarColor(int index) {
-    switch (index % 5) {
-      case 0:
-        return Colors.deepPurple;
-      case 1:
-        return Colors.teal;
-      case 2:
-        return Colors.blue;
-      case 3:
-        return Colors.green;
-      case 4:
-        return Colors.orange;
-      default:
-        return Colors.deepPurple;
-    }
+  Widget _buildModernStudentCard(Map<String, dynamic> student, int index) {
+    final grade = student['grade'] ?? '';
+    final studentName = student['studentName'] ?? '';
+    final studentId = student['studentId'] ?? '';
+    final leaveTime = _gradeLeaveTime[grade] ?? '8:00 AM';
+    final isPendingPickup = _pendingPickupRequests.contains(studentId);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+          onTap: () => _showStudentDetails(context, student),
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            child: Column(
+              children: [
+                // Student Header
+                Row(
+                  children: [
+                    // Modern Avatar
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            _getModernAvatarColor(index),
+                            _getModernAvatarColor(index).withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _getInitials(studentName),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingL),
+                    
+                    // Student Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            studentName,
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'Grade $grade',
+                                  style: TextStyle(
+                                    color: AppTheme.primaryColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.location_on_rounded,
+                                size: 14,
+                                color: AppTheme.textTertiary,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Al-Noor Elementary',
+                                  style: TextStyle(
+                                    color: AppTheme.textTertiary,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.successColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppTheme.successColor.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 14,
+                            color: AppTheme.successColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Active',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.successColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: AppTheme.spacingL),
+                
+                // Info Cards Row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildModernInfoCard(
+                        icon: Icons.access_time_rounded,
+                        label: 'Leave Time',
+                        value: leaveTime,
+                        color: AppTheme.infoColor,
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingM),
+                    Expanded(
+                      child: _buildModernInfoCard(
+                        icon: Icons.school_rounded,
+                        label: 'Status',
+                        value: 'Present',
+                        color: AppTheme.successColor,
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingM),
+                    Expanded(
+                      child: _buildModernInfoCard(
+                        icon: Icons.directions_car_rounded,
+                        label: 'Transport',
+                        value: 'Ready',
+                        color: AppTheme.warningColor,
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: AppTheme.spacingL),
+                
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: isPendingPickup ? null : () => _sendPickupRequest(student),
+                        icon: Icon(
+                          isPendingPickup ? Icons.schedule_rounded : Icons.directions_car_rounded,
+                          size: 20,
+                        ),
+                        label: Text(
+                          isPendingPickup ? 'Request Sent' : 'Request Pickup',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isPendingPickup ? AppTheme.textTertiary : AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppTheme.spacingM),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showStudentDetails(context, student),
+                        icon: const Icon(Icons.info_outline_rounded, size: 20),
+                        label: const Text(
+                          'Details',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.3)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingM),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 24,
+          ),
+          const SizedBox(height: AppTheme.spacingXS),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: color.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getModernAvatarColor(int index) {
+    const colors = [
+      AppTheme.primaryColor,
+      AppTheme.secondaryColor,
+      AppTheme.successColor,
+      AppTheme.warningColor,
+      AppTheme.infoColor,
+    ];
+    return colors[index % colors.length];
   }
 
   String _getInitials(String name) {
@@ -615,6 +714,15 @@ class _HomePageState extends State<HomePage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _buildStudentDetailsSheet(context, student),
+    );
+  }
+
+  void _showNotificationsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _buildNotificationsSheet(context),
     );
   }
 
@@ -722,6 +830,273 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationsSheet(BuildContext context) {
+    // TODO: Fetch real notifications from Firebase
+    final notifications = <Map<String, dynamic>>[];
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.notifications_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacingM),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Notifications',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '${notifications.where((n) => !(n['isRead'] as bool)).length} unread',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.mark_email_read_rounded,
+                        color: AppTheme.primaryColor,
+                      ),
+                      onPressed: () {
+                        // Mark all as read logic
+                      },
+                      tooltip: 'Mark all as read',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Notifications List
+          Expanded(
+            child: notifications.isEmpty
+                ? _buildEmptyNotifications()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) => _buildNotificationCard(notifications[index]),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyNotifications() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingXXL),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Icon(
+                Icons.notifications_none_rounded,
+                size: 50,
+                color: AppTheme.primaryColor.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingXL),
+            Text(
+              'No notifications yet',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: AppTheme.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Text(
+              'We\'ll notify you about important updates',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(Map<String, dynamic> notification) {
+    final isRead = notification['isRead'] as bool;
+    final type = notification['type'] as String;
+    
+    IconData getNotificationIcon() {
+      switch (type) {
+        case 'pickup':
+          return Icons.directions_car_rounded;
+        case 'schedule':
+          return Icons.schedule_rounded;
+        case 'announcement':
+          return Icons.campaign_rounded;
+        case 'attendance':
+          return Icons.check_circle_rounded;
+        default:
+          return Icons.notifications_rounded;
+      }
+    }
+    
+    Color getNotificationColor() {
+      switch (type) {
+        case 'pickup':
+          return AppTheme.warningColor;
+        case 'schedule':
+          return AppTheme.infoColor;
+        case 'announcement':
+          return AppTheme.primaryColor;
+        case 'attendance':
+          return AppTheme.successColor;
+        default:
+          return AppTheme.primaryColor;
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+      decoration: BoxDecoration(
+        color: isRead ? Colors.white : AppTheme.primaryColor.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(
+          color: isRead ? Colors.grey.shade200 : AppTheme.primaryColor.withOpacity(0.2),
+        ),
+        boxShadow: isRead ? [] : AppTheme.softShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          onTap: () {
+            // Handle notification tap
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: getNotificationColor().withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    getNotificationIcon(),
+                    color: getNotificationColor(),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: AppTheme.spacingM),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification['title'],
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (!isRead)
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        notification['message'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        notification['time'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textTertiary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
