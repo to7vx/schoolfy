@@ -15,48 +15,58 @@ class StudentLeaveTimeScreen extends StatefulWidget {
 
 class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final Map<String, TextEditingController> _noteControllers = {};
   final Map<String, TextEditingController> _timeControllers = {};
   final AdminNotificationService _notificationService = AdminNotificationService();
-  bool _globalAutoNotification = false;
 
-  final List<String> _grades = [
-    '1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B',
-    'KG-A', 'KG-B', 'Pre-K-A', 'Pre-K-B'
-  ];
+  List<String> _grades = []; // Dynamic grades from Firestore
+  bool _isLoadingGrades = true; // Track loading state
 
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
-    _loadGlobalSettings();
+    _loadGradesFromFirestore();
+  }
+
+  Future<void> _loadGradesFromFirestore() async {
+    try {
+      final gradesSnapshot = await _firestore
+          .collection('grades')
+          .orderBy('name')
+          .get();
+      
+      final loadedGrades = gradesSnapshot.docs
+          .map((doc) => (doc.data())['name'] as String)
+          .toList();
+      
+      setState(() {
+        _grades = loadedGrades;
+        _isLoadingGrades = false;
+      });
+      
+      // Initialize controllers after loading grades
+      _initializeControllers();
+    } catch (e) {
+      print('Error loading grades from Firestore: $e');
+      // Fallback to hardcoded grades if Firestore fails
+      setState(() {
+        _grades = [
+          '1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B',
+          'KG-A', 'KG-B', 'Pre-K-A', 'Pre-K-B'
+        ];
+        _isLoadingGrades = false;
+      });
+      _initializeControllers();
+    }
   }
 
   void _initializeControllers() {
     for (String grade in _grades) {
-      _noteControllers[grade] = TextEditingController();
       _timeControllers[grade] = TextEditingController();
-    }
-  }
-
-  Future<void> _loadGlobalSettings() async {
-    try {
-      final doc = await _firestore.collection('settings').doc('leave_time_automation').get();
-      if (doc.exists) {
-        setState(() {
-          _globalAutoNotification = doc.data()?['enabled'] ?? false;
-        });
-      }
-    } catch (e) {
-      print('Error loading global settings: $e');
     }
   }
 
   @override
   void dispose() {
-    for (var controller in _noteControllers.values) {
-      controller.dispose();
-    }
     for (var controller in _timeControllers.values) {
       controller.dispose();
     }
@@ -65,108 +75,135 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.schedule_send,
-                  color: AppTheme.primaryColor,
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.schedule_send,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Student Leave Time Management',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _buildGlobalControls(),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Stats Row
+              _buildStatsRow(),
+              const SizedBox(height: 24),
+
+              // Grade Leave Time Management
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Main Grade List
+                    Expanded(
+                      flex: 2,
+                      child: _buildGradesList(),
+                    ),
+                    const SizedBox(width: 24),
+                    // History Panel
+                    Expanded(
+                      flex: 1,
+                      child: _buildHistoryPanel(),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Student Leave Time Management',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              _buildGlobalControls(),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Stats Row
-          _buildStatsRow(),
-          const SizedBox(height: 24),
-
-          // Grade Leave Time Management
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Main Grade List
-                Expanded(
-                  flex: 2,
-                  child: _buildGradesList(),
-                ),
-                const SizedBox(width: 24),
-                // History Panel
-                Expanded(
-                  flex: 1,
-                  child: _buildHistoryPanel(),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildGlobalControls() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.settings, size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'Global Settings',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Switch(
-                  value: _globalAutoNotification,
-                  onChanged: _toggleGlobalAutoNotification,
-                  activeColor: AppTheme.primaryColor,
-                ),
-                const SizedBox(width: 8),
-                const Text('Enable Auto-Notification for All Grades'),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: _sendCustomNotificationToAll,
-              icon: const Icon(Icons.notifications_active, size: 16),
-              label: const Text('Send Custom Alert'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Bulk Actions',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _setLeaveTimeForAllGrades,
+                      icon: const Icon(Icons.schedule_send, size: 16),
+                      label: const Text('Set Leave Time for All Grades'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: _showBulkTimePicker,
+                    icon: const Icon(Icons.schedule, size: 16),
+                    label: const Text('Custom Time for All'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _resetAllGrades,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Reset All Grades'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -260,40 +297,48 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 80, maxHeight: 120),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color),
                 ),
-                child: Icon(icon, color: color),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -323,14 +368,85 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: ListView.builder(
-              itemCount: _grades.length,
-              itemBuilder: (context, index) {
-                return _buildGradeItem(_grades[index]);
-              },
-            ),
+            child: _isLoadingGrades
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Loading grades...'),
+                      ],
+                    ),
+                  )
+                : _grades.isEmpty
+                    ? _buildEmptyGradesState()
+                    : StreamBuilder<QuerySnapshot>(
+                        stream: _firestore.collection('grades').orderBy('name').snapshots(),
+                        builder: (context, snapshot) {
+                          // Use cached grades until new data arrives
+                          final currentGrades = snapshot.hasData && snapshot.data!.docs.isNotEmpty
+                              ? snapshot.data!.docs
+                                  .map((doc) => (doc.data() as Map<String, dynamic>)['name'] as String)
+                                  .toList()
+                              : _grades;
+
+                          return ListView.builder(
+                            itemCount: currentGrades.length,
+                            itemBuilder: (context, index) {
+                              return _buildGradeItem(currentGrades[index]);
+                            },
+                          );
+                        },
+                      ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyGradesState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.school,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Grades Available',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please add grades in Student Management first',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => _loadGradesFromFirestore(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh Grades'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -344,7 +460,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
             : <String, dynamic>{};
 
         final status = gradeData['status'] ?? 'not_sent';
-        final autoEnabled = gradeData['autoNotificationEnabled'] ?? false;
+        final autoEnabled = gradeData['autosetEnabled'] ?? false;
 
         return ExpansionTile(
           leading: _buildStatusIndicator(status),
@@ -365,7 +481,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
-                    'AUTO',
+                    'AUTOSET',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -505,40 +621,41 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
   }
 
   Widget _buildGradeControls(String grade, Map<String, dynamic> gradeData) {
-    _noteControllers[grade]?.text = gradeData['customNote'] ?? '';
-    
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Auto-notification toggle
+          // Autoset toggle
           Row(
             children: [
               Switch(
-                value: gradeData['autoNotificationEnabled'] ?? false,
-                onChanged: (value) => _toggleAutoNotification(grade, value),
+                value: gradeData['autosetEnabled'] ?? false,
+                onChanged: (value) => _toggleAutoset(grade, value),
                 activeColor: AppTheme.primaryColor,
               ),
               const SizedBox(width: 8),
-              const Text('Enable Auto-Notification'),
+              const Text('Autoset - Leave time shows daily on app'),
               const Spacer(),
-              if (gradeData['autoNotificationEnabled'] == true) ...[
-                const Text('Scheduled: '),
+              if (gradeData['autosetEnabled'] == true) ...[
+                const Text('Time: '),
                 InkWell(
                   onTap: () => _showTimePicker(context, grade, true),
                   child: Container(
                     width: 120,
+                    height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         const Icon(Icons.access_time, size: 16, color: Colors.grey),
                         const SizedBox(width: 8),
-                        Expanded(
+                        Flexible(
                           child: Text(
                             _timeControllers[grade]?.text.isNotEmpty == true 
                                 ? _timeControllers[grade]!.text 
@@ -548,6 +665,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                                   ? Colors.black87 
                                   : Colors.grey,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -556,19 +674,6 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                 ),
               ],
             ],
-          ),
-          const SizedBox(height: 16),
-
-          // Custom note
-          TextFormField(
-            controller: _noteControllers[grade],
-            decoration: const InputDecoration(
-              labelText: 'Custom Note (Optional)',
-              border: OutlineInputBorder(),
-              hintText: 'e.g., "Please pick up your child from the main entrance"',
-            ),
-            maxLines: 2,
-            onChanged: (value) => _updateCustomNote(grade, value),
           ),
           const SizedBox(height: 16),
 
@@ -593,12 +698,6 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
                 ),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: () => _sendNotification(grade),
-                icon: const Icon(Icons.send, size: 16),
-                label: const Text('Send Notification'),
               ),
               const SizedBox(width: 12),
               if (gradeData['status'] == 'sent')
@@ -785,28 +884,14 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
   }
 
   // Action Methods
-  Future<void> _toggleGlobalAutoNotification(bool value) async {
-    try {
-      await _firestore.collection('settings').doc('leave_time_automation').set({
-        'enabled': value,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      setState(() {
-        _globalAutoNotification = value;
-      });
-    } catch (e) {
-      print('Error updating global setting: $e');
-    }
-  }
-
-  Future<void> _toggleAutoNotification(String grade, bool value) async {
+  Future<void> _toggleAutoset(String grade, bool value) async {
     try {
       await _firestore.collection('grade_leave_times').doc(grade).set({
-        'autoNotificationEnabled': value,
+        'autosetEnabled': value,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
-      print('Error updating auto notification: $e');
+      print('Error updating autoset: $e');
     }
   }
 
@@ -823,6 +908,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
             final scheduledDateTime = DateTime(now.year, now.month, now.day, hour, minute);
             
             await _firestore.collection('grade_leave_times').doc(grade).set({
+              'autosetTime': time, // Store as string for autoset functionality
               'scheduledTime': Timestamp.fromDate(scheduledDateTime),
               'updatedAt': FieldValue.serverTimestamp(),
             }, SetOptions(merge: true));
@@ -924,17 +1010,6 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
     }
   }
 
-  Future<void> _updateCustomNote(String grade, String note) async {
-    try {
-      await _firestore.collection('grade_leave_times').doc(grade).set({
-        'customNote': note,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (e) {
-      print('Error updating custom note: $e');
-    }
-  }
-
   Future<void> _setLeaveTimeNow(String grade) async {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -999,13 +1074,10 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
 
   Future<void> _sendNotification(String grade) async {
     try {
-      // Get custom note from the controller
-      final customNote = _noteControllers[grade]?.text ?? '';
-      
-      // Use the enhanced notification service
+      // Use the enhanced notification service without custom note
       await _notificationService.sendGradeLeaveTimeNotification(
         grade: grade,
-        customNote: customNote,
+        customNote: '', // No custom note functionality
       );
 
       if (mounted) {
@@ -1029,51 +1101,233 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
     }
   }
 
-  Future<void> _sendCustomNotificationToAll() async {
-    showDialog(
+  Future<void> _logToHistory(String grade, String action, int studentsCount, String adminName) async {
+    try {
+      await _firestore.collection('leave_time_history').add({
+        'grade': grade,
+        'action': action,
+        'studentsNotified': studentsCount,
+        'adminName': adminName,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error logging to history: $e');
+    }
+  }
+
+  // New bulk action methods
+  Future<void> _setLeaveTimeForAllGrades() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final now = DateTime.now();
+      final leaveTimeString = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      
+      int totalStudents = 0;
+      final batch = _firestore.batch();
+      
+      // Process each grade
+      for (String grade in _grades) {
+        // Update grade status
+        final gradeRef = _firestore.collection('grade_leave_times').doc(grade);
+        batch.set(gradeRef, {
+          'gradeId': grade,
+          'leaveTime': leaveTimeString,
+          'schoolId': 'SCH_001',
+          'setBy': authProvider.user?.email ?? 'admin@schoolfy.com',
+          'setAt': FieldValue.serverTimestamp(),
+          'isActive': true,
+          'status': 'sent',
+          'lastSent': Timestamp.fromDate(now),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        
+        // Update all students in this grade
+        final studentsSnapshot = await _firestore
+            .collection('students')
+            .where('grade', isEqualTo: grade)
+            .get();
+        
+        totalStudents += studentsSnapshot.docs.length;
+        
+        for (var doc in studentsSnapshot.docs) {
+          batch.update(doc.reference, {
+            'leaveStatus': 'left',
+            'leaveTime': Timestamp.fromDate(now),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      
+      await batch.commit();
+      
+      // Log to history
+      await _logToHistory('All Grades', 'Bulk Set', totalStudents, authProvider.userData?['name'] ?? 'Admin');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Leave time set for all grades ($totalStudents students)'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error setting leave time for all grades: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error setting leave time: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showBulkTimePicker() async {
+    final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
-      builder: (context) => _CustomNotificationDialog(
-        onSend: (message) async {
-          try {
-            // Get all guardians
-            final guardiansSnapshot = await _firestore
-                .collection('users')
-                .where('role', isEqualTo: 'guardian')
-                .get();
-
-            final batch = _firestore.batch();
-            for (var doc in guardiansSnapshot.docs) {
-              final notificationRef = _firestore.collection('notifications').doc();
-              batch.set(notificationRef, {
-                'recipientId': doc.id,
-                'title': 'School Announcement',
-                'message': message,
-                'type': 'custom_alert',
-                'timestamp': FieldValue.serverTimestamp(),
-                'read': false,
-                'priority': 'high',
-              });
-            }
-
-            await batch.commit();
-
-            final authProvider = Provider.of<AuthProvider>(context, listen: false);
-            await _logToHistory('All Grades', 'Custom Alert', guardiansSnapshot.docs.length, authProvider.userData?['name'] ?? 'Admin');
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Custom notification sent to ${guardiansSnapshot.docs.length} guardians'),
-                  backgroundColor: AppTheme.successColor,
-                ),
-              );
-            }
-          } catch (e) {
-            print('Error sending custom notification: $e');
-          }
-        },
-      ),
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: AppTheme.primaryColor,
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
+          ),
+          child: child!,
+        );
+      },
     );
+
+    if (selectedTime != null) {
+      await _setBulkCustomLeaveTime(selectedTime);
+    }
+  }
+
+  Future<void> _setBulkCustomLeaveTime(TimeOfDay selectedTime) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final now = DateTime.now();
+      final customDateTime = DateTime(now.year, now.month, now.day, selectedTime.hour, selectedTime.minute);
+      final leaveTimeString = '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}';
+      
+      int totalStudents = 0;
+      final batch = _firestore.batch();
+      
+      // Process each grade
+      for (String grade in _grades) {
+        // Update grade status with custom time
+        final gradeRef = _firestore.collection('grade_leave_times').doc(grade);
+        batch.set(gradeRef, {
+          'gradeId': grade,
+          'leaveTime': leaveTimeString,
+          'schoolId': 'SCH_001',
+          'setBy': authProvider.user?.email ?? 'admin@schoolfy.com',
+          'setAt': FieldValue.serverTimestamp(),
+          'isActive': true,
+          'status': 'sent',
+          'lastSent': Timestamp.fromDate(customDateTime),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        
+        // Update all students in this grade
+        final studentsSnapshot = await _firestore
+            .collection('students')
+            .where('grade', isEqualTo: grade)
+            .get();
+        
+        totalStudents += studentsSnapshot.docs.length;
+        
+        for (var doc in studentsSnapshot.docs) {
+          batch.update(doc.reference, {
+            'leaveStatus': 'left',
+            'leaveTime': Timestamp.fromDate(customDateTime),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      
+      await batch.commit();
+      
+      // Log to history
+      await _logToHistory('All Grades', 'Bulk Custom Time', totalStudents, authProvider.userData?['name'] ?? 'Admin');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Leave time set to ${selectedTime.format(context)} for all grades ($totalStudents students)'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error setting bulk custom leave time: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error setting leave time'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _resetAllGrades() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      int totalStudents = 0;
+      final batch = _firestore.batch();
+      
+      // Process each grade
+      for (String grade in _grades) {
+        // Reset grade status
+        final gradeRef = _firestore.collection('grade_leave_times').doc(grade);
+        batch.set(gradeRef, {
+          'status': 'not_sent',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        
+        // Reset all students in this grade
+        final studentsSnapshot = await _firestore
+            .collection('students')
+            .where('grade', isEqualTo: grade)
+            .get();
+        
+        totalStudents += studentsSnapshot.docs.length;
+        
+        for (var doc in studentsSnapshot.docs) {
+          batch.update(doc.reference, {
+            'leaveStatus': 'in_school',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+      
+      await batch.commit();
+      
+      // Log to history
+      await _logToHistory('All Grades', 'Bulk Reset', totalStudents, authProvider.userData?['name'] ?? 'Admin');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('All grades reset ($totalStudents students back to school)'),
+            backgroundColor: AppTheme.warningColor,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error resetting all grades: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resetting grades: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _resetGradeStatus(String grade) async {
@@ -1114,80 +1368,11 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
     }
   }
 
-  Future<void> _logToHistory(String grade, String action, int studentsCount, String adminName) async {
-    try {
-      await _firestore.collection('leave_time_history').add({
-        'grade': grade,
-        'action': action,
-        'studentsNotified': studentsCount,
-        'adminName': adminName,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      print('Error logging to history: $e');
-    }
-  }
-
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month} ${_formatTime(dateTime)}';
-  }
-}
-
-class _CustomNotificationDialog extends StatefulWidget {
-  final Function(String) onSend;
-
-  const _CustomNotificationDialog({required this.onSend});
-
-  @override
-  State<_CustomNotificationDialog> createState() => _CustomNotificationDialogState();
-}
-
-class _CustomNotificationDialogState extends State<_CustomNotificationDialog> {
-  final TextEditingController _messageController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Send Custom Notification'),
-      content: SizedBox(
-        width: 400,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('This will send a notification to all guardians.'),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _messageController,
-              decoration: const InputDecoration(
-                labelText: 'Message',
-                border: OutlineInputBorder(),
-                hintText: 'e.g., School will close early today due to weather...',
-              ),
-              maxLines: 3,
-              maxLength: 200,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _messageController.text.isNotEmpty
-              ? () {
-                  widget.onSend(_messageController.text);
-                  Navigator.of(context).pop();
-                }
-              : null,
-          child: const Text('Send to All'),
-        ),
-      ],
-    );
   }
 }
