@@ -203,6 +203,21 @@ service cloud.firestore {
       allow create: if isAdmin();
     }
     
+    // Attendance collection (for admin dashboard)
+    match /attendance/{attendanceId} {
+      // Admins can read and write attendance records
+      allow read, write: if isAdmin();
+      
+      // Guardians can read attendance for their own students
+      allow read: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (request.auth.uid in resource.data.get('authorizedGuardianIds', []) ||
+        resource.data.primaryGuardianId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guardianId);
+      
+      // Allow creating attendance records
+      allow create: if isAdmin();
+    }
+    
     // Any other collections that might be created by the admin dashboard
     match /schools/{schoolId} {
       allow read: if request.auth != null;

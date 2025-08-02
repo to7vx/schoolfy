@@ -10,6 +10,7 @@ import 'dashboard_home_screen.dart';
 import 'student_management_screen.dart';
 import 'guardian_linking_screen.dart';
 import 'student_leave_time_screen.dart';
+import 'attendance_management_screen.dart';
 import 'pickup_queue_screen.dart';
 import 'pickup_history_screen.dart';
 import 'settings_screen.dart';
@@ -35,6 +36,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       const StudentManagementScreen(),
       const GuardianLinkingScreen(),
       const StudentLeaveTimeScreen(),
+      const AttendanceManagementScreen(),
       const PickupQueueScreen(),
       const PickupHistoryScreen(),
       const SettingsScreen(),
@@ -60,6 +62,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon: Icons.schedule_send_outlined,
         selectedIcon: Icons.schedule_send,
         label: 'Leave Time',
+      ),
+      NavigationItem(
+        icon: Icons.calendar_today_outlined,
+        selectedIcon: Icons.calendar_today,
+        label: 'Attendance',
       ),
       NavigationItem(
         icon: Icons.queue_outlined,

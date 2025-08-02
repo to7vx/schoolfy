@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "schoolfy-706ff"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

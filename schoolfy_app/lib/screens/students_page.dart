@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import 'student_attendance_page.dart';
 
 class StudentsPage extends StatefulWidget {
   const StudentsPage({super.key});
@@ -464,6 +466,8 @@ class _StudentsPageState extends State<StudentsPage> {
   Widget _buildModernStudentCard(Map<String, dynamic> student, int index) {
     final studentName = student['studentName'] ?? 'Unknown Student';
     final grade = student['grade'] ?? 'N/A';
+    final studentId = student['studentId'] ?? '';
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
@@ -476,7 +480,12 @@ class _StudentsPageState extends State<StudentsPage> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-          onTap: () => _showStudentDetails(context, student),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentAttendancePage(student: student),
+            ),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(AppTheme.spacingL),
             child: Row(
@@ -564,40 +573,54 @@ class _StudentsPageState extends State<StudentsPage> {
                   ),
                 ),
                 
-                // Status and Action
+                // Attendance Status
                 Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.successColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppTheme.successColor.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle_rounded,
-                            size: 14,
-                            color: AppTheme.successColor,
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('attendance')
+                          .doc('${studentId}_$today')
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        String status = 'unmarked';
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          final data = snapshot.data!.data() as Map<String, dynamic>?;
+                          status = data?['status'] ?? 'unmarked';
+                        }
+                        
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Active',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.successColor,
-                              fontWeight: FontWeight.w600,
+                          decoration: BoxDecoration(
+                            color: _getAttendanceStatusColor(status).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _getAttendanceStatusColor(status).withOpacity(0.3),
                             ),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getAttendanceStatusIcon(status),
+                                size: 14,
+                                color: _getAttendanceStatusColor(status),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _getAttendanceStatusText(status),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: _getAttendanceStatusColor(status),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 8),
                     Icon(
@@ -635,6 +658,53 @@ class _StudentsPageState extends State<StudentsPage> {
     return name[0];
   }
 
+  Color _getAttendanceStatusColor(String status) {
+    switch (status) {
+      case 'present':
+        return AppTheme.successColor;
+      case 'absent':
+        return Colors.red;
+      case 'late':
+        return AppTheme.warningColor;
+      case 'excused':
+        return AppTheme.infoColor;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getAttendanceStatusIcon(String status) {
+    switch (status) {
+      case 'present':
+        return Icons.check_circle_rounded;
+      case 'absent':
+        return Icons.cancel_rounded;
+      case 'late':
+        return Icons.schedule_rounded;
+      case 'excused':
+        return Icons.event_note_rounded;
+      default:
+        return Icons.help_rounded;
+    }
+  }
+
+  String _getAttendanceStatusText(String status) {
+    switch (status) {
+      case 'present':
+        return 'Present';
+      case 'absent':
+        return 'Absent';
+      case 'late':
+        return 'Late';
+      case 'excused':
+        return 'Excused';
+      default:
+        return 'Not Marked';
+    }
+  }
+
+  // Unused method - replaced with navigation to StudentAttendancePage
+  // ignore: unused_element
   void _showStudentDetails(BuildContext context, Map<String, dynamic> student) {
     showModalBottomSheet(
       context: context,
@@ -644,6 +714,7 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildStudentDetailsSheet(BuildContext context, Map<String, dynamic> student) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,

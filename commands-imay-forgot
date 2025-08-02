@@ -2,9 +2,11 @@
 
 #cd "f:\Schoolfy all on one\mobile app 2\admin_dashboard" && flutter run -d chrome --web-port=8083
 
-#cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8083
+#cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8081
 #flutter run -d chrome --web-port=8081
-#cd "f:\Schoolfy all on one\mobile app 2\pickup_display_web" && flutter run -d chrome --web-port=8083
+#flutter run -d chrome --web-port=8083
+
+#admin@schoolfy.com
 
 
 #http://localhost:8081/

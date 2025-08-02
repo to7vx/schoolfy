@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import 'dart:async';
 
@@ -567,11 +568,51 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(width: AppTheme.spacingM),
                     Expanded(
-                      child: _buildModernInfoCard(
-                        icon: Icons.school_rounded,
-                        label: 'Status',
-                        value: 'Present',
-                        color: AppTheme.successColor,
+                      child: StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('attendance')
+                            .doc('${studentId}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}')
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          String status = 'Not Marked';
+                          Color statusColor = Colors.grey;
+                          IconData statusIcon = Icons.help_rounded;
+                          
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data = snapshot.data!.data() as Map<String, dynamic>?;
+                            final attendanceStatus = data?['status'] ?? 'unmarked';
+                            
+                            switch (attendanceStatus) {
+                              case 'present':
+                                status = 'Present';
+                                statusColor = AppTheme.successColor;
+                                statusIcon = Icons.check_circle_rounded;
+                                break;
+                              case 'absent':
+                                status = 'Absent';
+                                statusColor = Colors.red;
+                                statusIcon = Icons.cancel_rounded;
+                                break;
+                              case 'late':
+                                status = 'Late';
+                                statusColor = AppTheme.warningColor;
+                                statusIcon = Icons.schedule_rounded;
+                                break;
+                              case 'excused':
+                                status = 'Excused';
+                                statusColor = AppTheme.infoColor;
+                                statusIcon = Icons.event_note_rounded;
+                                break;
+                            }
+                          }
+                          
+                          return _buildModernInfoCard(
+                            icon: statusIcon,
+                            label: 'Attendance',
+                            value: status,
+                            color: statusColor,
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: AppTheme.spacingM),
