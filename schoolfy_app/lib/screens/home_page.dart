@@ -24,8 +24,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    print('DEBUG: HomePage initState called');
-    print('DEBUG: Students data: ${widget.students}');
     _loadUserData();
     _loadGradeLeaveTime();
     _setupGradeLeaveTimeStreams();
@@ -75,28 +73,17 @@ class _HomePageState extends State<HomePage> {
         }
       }
       
-      print('DEBUG: Student grades found: $studentGrades');
-      
       // Fetch leave times for each grade
       for (String grade in studentGrades) {
-        print('DEBUG: Fetching leave time for grade: $grade');
         final gradeDoc = await FirebaseFirestore.instance
             .collection('grade_leave_times')
             .doc(grade)
             .get();
             
-        print('DEBUG: Grade document exists for $grade: ${gradeDoc.exists}');
-        if (gradeDoc.exists) {
-          print('DEBUG: Grade document data for $grade: ${gradeDoc.data()}');
-        }
-            
         if (gradeDoc.exists && mounted) {
           final data = gradeDoc.data();
           final scheduledTime = data?['scheduledTime'] as Timestamp?;
           final leaveTime = data?['leaveTime']; // Can be String or Timestamp
-          final status = data?['status'];
-          
-          print('DEBUG: Grade $grade - Status: $status, LeaveTime: $leaveTime, ScheduledTime: $scheduledTime');
           
           String timeString = '8:00 AM'; // Default fallback
           
@@ -106,29 +93,22 @@ class _HomePageState extends State<HomePage> {
             if (leaveTime is String) {
               // New format: leaveTime is a string like "20:37"
               timeString = _formatTimeFromString(leaveTime);
-              print('DEBUG: Using leaveTime string for $grade: $timeString');
             } else if (leaveTime is Timestamp) {
               // Old format: leaveTime is a Timestamp
               final leaveDateTime = leaveTime.toDate();
               timeString = _formatTime(leaveDateTime);
-              print('DEBUG: Using leaveTime timestamp for $grade: $timeString');
             }
           } else if (scheduledTime != null) {
             // If scheduled time is set, show it
             final scheduledDateTime = scheduledTime.toDate();
             timeString = _formatTime(scheduledDateTime);
-            print('DEBUG: Using scheduledTime for $grade: $timeString');
           }
           
           setState(() {
             _gradeLeaveTime[grade] = timeString;
           });
-          
-          print('DEBUG: Set leave time for $grade to: $timeString');
         }
       }
-      
-      print('DEBUG: Final gradeLeaveTime map: $_gradeLeaveTime');
     } catch (e) {
       print('Error loading grade leave times: $e');
     }
@@ -148,24 +128,15 @@ class _HomePageState extends State<HomePage> {
 
     // Set up real-time listeners for each grade
     for (String grade in studentGrades) {
-      print('DEBUG: Setting up stream listener for grade: $grade');
       final subscription = FirebaseFirestore.instance
           .collection('grade_leave_times')
           .doc(grade)
           .snapshots()
           .listen((snapshot) {
-        print('DEBUG: Stream update for grade $grade - exists: ${snapshot.exists}');
-        if (snapshot.exists) {
-          print('DEBUG: Stream data for $grade: ${snapshot.data()}');
-        }
-        
         if (snapshot.exists && mounted) {
           final data = snapshot.data();
           final scheduledTime = data?['scheduledTime'] as Timestamp?;
           final leaveTime = data?['leaveTime']; // Can be String or Timestamp
-          final status = data?['status'] ?? 'not_sent';
-          
-          print('DEBUG: Stream - Grade $grade, Status: $status, LeaveTime: $leaveTime, ScheduledTime: $scheduledTime');
           
           String timeString = '8:00 AM'; // Default fallback
           
@@ -175,18 +146,15 @@ class _HomePageState extends State<HomePage> {
             if (leaveTime is String) {
               // New format: leaveTime is a string like "20:37"
               timeString = _formatTimeFromString(leaveTime);
-              print('DEBUG: Stream - Using leaveTime string for $grade: $timeString');
             } else if (leaveTime is Timestamp) {
               // Old format: leaveTime is a Timestamp
               final leaveDateTime = leaveTime.toDate();
               timeString = _formatTime(leaveDateTime);
-              print('DEBUG: Stream - Using leaveTime timestamp for $grade: $timeString');
             }
           } else if (scheduledTime != null) {
             // If scheduled time is set, show it
             final scheduledDateTime = scheduledTime.toDate();
             timeString = _formatTime(scheduledDateTime);
-            print('DEBUG: Stream - Using scheduledTime for $grade: $timeString');
           }
           
           // Only update state if the time actually changed
@@ -194,9 +162,6 @@ class _HomePageState extends State<HomePage> {
             setState(() {
               _gradeLeaveTime[grade] = timeString;
             });
-            print('DEBUG: Stream - Updated leave time for $grade to: $timeString');
-          } else {
-            print('DEBUG: Stream - Leave time for $grade unchanged: $timeString');
           }
         }
       });
@@ -227,7 +192,6 @@ class _HomePageState extends State<HomePage> {
       final minuteStr = minute.toString().padLeft(2, '0');
       return '$hour12:$minuteStr $period';
     } catch (e) {
-      print('DEBUG: Error formatting time string $timeString: $e');
       return timeString; // Return original if parsing fails
     }
   }
@@ -617,12 +581,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(width: AppTheme.spacingM),
                     Expanded(
-                      child: _buildModernInfoCard(
-                        icon: Icons.directions_car_rounded,
-                        label: 'Transport',
-                        value: 'Ready',
-                        color: AppTheme.warningColor,
-                      ),
+                      child: _buildTransportCard(student),
                     ),
                   ],
                 ),
@@ -637,7 +596,7 @@ class _HomePageState extends State<HomePage> {
                       child: ElevatedButton.icon(
                         onPressed: isPendingPickup ? null : () => _sendPickupRequest(student),
                         icon: Icon(
-                          isPendingPickup ? Icons.schedule_rounded : Icons.directions_car_rounded,
+                          isPendingPickup ? Icons.schedule_rounded : Icons.directions_bus_rounded,
                           size: 20,
                         ),
                         label: Text(
@@ -726,6 +685,121 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTransportCard(Map<String, dynamic> student) {
+    final studentId = student['studentId'];
+    
+    if (studentId == null) {
+      return _buildModernInfoCard(
+        icon: Icons.directions_bus,
+        label: 'No Transport',
+        value: 'None',
+        color: Colors.grey,
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('students')
+          .doc(studentId)
+          .snapshots(),
+      builder: (context, studentSnapshot) {
+        if (studentSnapshot.connectionState == ConnectionState.waiting) {
+          return _buildModernInfoCard(
+            icon: Icons.directions_bus,
+            label: 'Loading...',
+            value: 'None',
+            color: Colors.grey,
+          );
+        }
+
+        if (studentSnapshot.hasError) {
+          return _buildModernInfoCard(
+            icon: Icons.directions_bus,
+            label: 'Error',
+            value: 'None',
+            color: Colors.red,
+          );
+        }
+
+        if (!studentSnapshot.hasData || !studentSnapshot.data!.exists) {
+          return _buildModernInfoCard(
+            icon: Icons.directions_bus,
+            label: 'No Transport',
+            value: 'None',
+            color: Colors.grey,
+          );
+        }
+
+        final studentData = studentSnapshot.data!.data() as Map<String, dynamic>;
+        final busId = studentData['busId'];
+
+        if (busId == null) {
+          return _buildModernInfoCard(
+            icon: Icons.directions_bus,
+            label: 'No Transport',
+            value: 'None',
+            color: Colors.grey,
+          );
+        }
+
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('buses')
+              .doc(busId)
+              .snapshots(),
+          builder: (context, busSnapshot) {
+            Color cardColor;
+            String statusText;
+            IconData iconData;
+            String busDisplayText = 'None';
+
+            if (busSnapshot.connectionState == ConnectionState.waiting) {
+              cardColor = Colors.grey;
+              statusText = 'Loading...';
+              iconData = Icons.directions_bus;
+            } else if (busSnapshot.hasError) {
+              cardColor = Colors.red;
+              statusText = 'Error';
+              iconData = Icons.directions_bus;
+            } else if (!busSnapshot.hasData || !busSnapshot.data!.exists) {
+              cardColor = Colors.grey;
+              statusText = 'No Transport';
+              iconData = Icons.directions_bus;
+            } else {
+              final busData = busSnapshot.data!.data() as Map<String, dynamic>?;
+              if (busData == null) {
+                cardColor = Colors.grey;
+                statusText = 'No Transport';
+                iconData = Icons.directions_bus;
+              } else {
+                final routeStatus = busData['routeStatus'] ?? 'idle';
+                final busNumber = busData['busNumber'] ?? 'Unknown';
+                busDisplayText = 'Bus $busNumber';
+                
+                if (routeStatus == 'on_route') {
+                  cardColor = Colors.green;
+                  statusText = 'On Route';
+                  iconData = Icons.directions_bus;
+                } else {
+                  cardColor = AppTheme.primaryColor;
+                  statusText = 'Transport';
+                  iconData = Icons.directions_bus;
+                }
+              }
+            }
+
+            return _buildModernInfoCard(
+              icon: iconData,
+              label: statusText,
+              value: busDisplayText,
+              color: cardColor,
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1023,7 +1097,7 @@ class _HomePageState extends State<HomePage> {
     IconData getNotificationIcon() {
       switch (type) {
         case 'pickup':
-          return Icons.directions_car_rounded;
+          return Icons.directions_bus_rounded;
         case 'schedule':
           return Icons.schedule_rounded;
         case 'announcement':
