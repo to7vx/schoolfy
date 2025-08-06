@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/language_provider.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -22,7 +23,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _emergencyAlerts = true;
   bool _biometricLogin = false;
   bool _autoBackup = true;
-  String _selectedTheme = 'System';
   final User? user = FirebaseAuth.instance.currentUser;
 
   @override
@@ -312,13 +312,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Icons.tune_rounded,
                   [
                     _buildLanguageSelector(),
-                    _buildDropdownTile(
-                      'Theme',
-                      'Choose your app theme',
-                      _selectedTheme,
-                      ['Light', 'Dark', 'System'],
-                      (value) => setState(() => _selectedTheme = value!),
-                    ),
+                    _buildThemeSelector(),
                     _buildSwitchTile(
                       'Auto Backup',
                       'Automatically backup your data',
@@ -665,48 +659,87 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildDropdownTile(String title, String subtitle, String value, List<String> options, Function(String?) onChanged) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spacingL,
-        vertical: AppTheme.spacingS,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildThemeSelector() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingL,
+            vertical: AppTheme.spacingS,
           ),
-          DropdownButton<String>(
-            value: value,
-            onChanged: onChanged,
-            underline: Container(),
-            items: options.map((String option) {
-              return DropdownMenuItem<String>(
-                value: option,
-                child: Text(option),
-              );
-            }).toList(),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n?.theme ?? 'Theme',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      l10n?.chooseTheme ?? 'Choose your app theme',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              DropdownButton<AppThemeMode>(
+                value: themeProvider.themeMode,
+                onChanged: (AppThemeMode? newThemeMode) {
+                  if (newThemeMode != null) {
+                    themeProvider.setThemeMode(newThemeMode);
+                  }
+                },
+                underline: Container(),
+                items: [
+                  DropdownMenuItem<AppThemeMode>(
+                    value: AppThemeMode.light,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.light_mode, size: 16),
+                        const SizedBox(width: 8),
+                        Text(l10n?.light ?? 'Light'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem<AppThemeMode>(
+                    value: AppThemeMode.dark,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.dark_mode, size: 16),
+                        const SizedBox(width: 8),
+                        Text(l10n?.dark ?? 'Dark'),
+                      ],
+                    ),
+                  ),
+                  DropdownMenuItem<AppThemeMode>(
+                    value: AppThemeMode.system,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.settings_brightness, size: 16),
+                        const SizedBox(width: 8),
+                        Text(l10n?.system ?? 'System'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

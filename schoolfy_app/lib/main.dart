@@ -16,6 +16,7 @@ import 'screens/profile_setup_page.dart';
 import 'services/notification_service.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/language_provider.dart';
+import 'providers/theme_provider.dart';
 
 // Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -34,8 +35,15 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => LanguageProvider()..initialize(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => LanguageProvider()..initialize(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ThemeProvider(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -46,11 +54,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<LanguageProvider>(
-      builder: (context, languageProvider, child) {
+    return Consumer2<LanguageProvider, ThemeProvider>(
+      builder: (context, languageProvider, themeProvider, child) {
         return MaterialApp(
           title: 'Schoolfy Guardian',
           theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.currentThemeMode,
           debugShowCheckedModeBanner: false,
           locale: languageProvider.currentLocale,
           localizationsDelegates: const [
