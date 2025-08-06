@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 import 'student_attendance_page.dart';
 
 class StudentsPage extends StatefulWidget {
@@ -27,6 +28,8 @@ class _StudentsPageState extends State<StudentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
@@ -62,14 +65,14 @@ class _StudentsPageState extends State<StudentsPage> {
                           builder: (context, snapshot) {
                             final userData = snapshot.data?.data() as Map<String, dynamic>?;
                             final linkedStudents = userData?['linkedStudents'] as List? ?? [];
-                            final firstName = userData?['firstName'] ?? 'Guardian';
+                            final firstName = userData?['firstName'] ?? (l10n?.guardian ?? 'Guardian');
                             
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Students',
-                                  style: TextStyle(
+                                Text(
+                                  l10n?.students ?? 'Students',
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
@@ -95,7 +98,7 @@ class _StudentsPageState extends State<StudentsPage> {
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    '${linkedStudents.length} student${linkedStudents.length != 1 ? 's' : ''} linked',
+                                    '${linkedStudents.length} ${linkedStudents.length != 1 ? (l10n?.studentsLinked ?? 'students linked') : (l10n?.studentLinked ?? 'student linked')}',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 14,
@@ -135,7 +138,7 @@ class _StudentsPageState extends State<StudentsPage> {
                           child: TextField(
                             controller: _searchController,
                             decoration: InputDecoration(
-                              hintText: 'Search students...',
+                              hintText: l10n?.searchStudents ?? 'Search students...',
                               hintStyle: TextStyle(color: AppTheme.textTertiary),
                               prefixIcon: Icon(
                                 Icons.search_rounded,
@@ -202,7 +205,7 @@ class _StudentsPageState extends State<StudentsPage> {
                                 children: [
                                   const Icon(Icons.person_rounded),
                                   const SizedBox(width: 8),
-                                  const Text('Sort by Name'),
+                                  Text(l10n?.sortBy != null ? '${l10n!.sortBy} ${l10n.name}' : 'Sort by Name'),
                                   if (_sortBy == 'Name') ...[
                                     const Spacer(),
                                     Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
@@ -216,7 +219,7 @@ class _StudentsPageState extends State<StudentsPage> {
                                 children: [
                                   const Icon(Icons.school_rounded),
                                   const SizedBox(width: 8),
-                                  const Text('Sort by Grade'),
+                                  Text(l10n?.sortBy != null ? '${l10n!.sortBy} ${l10n.grade}' : 'Sort by Grade'),
                                   if (_sortBy == 'Grade') ...[
                                     const Spacer(),
                                     Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
@@ -421,6 +424,8 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context);
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingXXL),
@@ -442,7 +447,7 @@ class _StudentsPageState extends State<StudentsPage> {
             ),
             const SizedBox(height: AppTheme.spacingXXL),
             Text(
-              'No students linked yet',
+              l10n?.noStudentsLinked ?? 'No students linked yet',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: AppTheme.textPrimary,
                 fontWeight: FontWeight.bold,
@@ -451,7 +456,7 @@ class _StudentsPageState extends State<StudentsPage> {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'Contact your school to link your children to your account',
+              l10n?.contactSchoolToLink ?? 'Contact your school to link your children to your account',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppTheme.textSecondary,
               ),
@@ -689,17 +694,19 @@ class _StudentsPageState extends State<StudentsPage> {
   }
 
   String _getAttendanceStatusText(String status) {
+    final l10n = AppLocalizations.of(context);
+    
     switch (status) {
       case 'present':
-        return 'Present';
+        return l10n?.present ?? 'Present';
       case 'absent':
-        return 'Absent';
+        return l10n?.absent ?? 'Absent';
       case 'late':
-        return 'Late';
+        return l10n?.late ?? 'Late';
       case 'excused':
-        return 'Excused';
+        return l10n?.excused ?? 'Excused';
       default:
-        return 'Not Marked';
+        return l10n?.notMarked ?? 'Not Marked';
     }
   }
 

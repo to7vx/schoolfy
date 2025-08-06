@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
@@ -198,6 +199,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
@@ -232,7 +235,7 @@ class _HomePageState extends State<HomePage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    firstName != null ? 'Welcome back,' : 'Welcome back!',
+                                    firstName != null ? (l10n?.welcomeBack ?? 'Welcome back,') : (l10n?.welcomeBackDefault ?? 'Welcome back!'),
                                     style: const TextStyle(
                                       color: Colors.white70,
                                       fontSize: 16,
@@ -241,7 +244,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    firstName ?? 'Guardian',
+                                    firstName ?? (l10n?.guardian ?? 'Guardian'),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 28,
@@ -259,7 +262,7 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
-                                      '${widget.students.length} student${widget.students.length != 1 ? 's' : ''} linked',
+                                      '${widget.students.length} ${widget.students.length != 1 ? (l10n?.studentsLinked ?? 'students linked') : (l10n?.studentLinked ?? 'student linked')}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 14,
@@ -299,7 +302,7 @@ class _HomePageState extends State<HomePage> {
           // Empty State or Students List
           widget.students.isEmpty
               ? SliverFillRemaining(
-                  child: _buildEmptyState(),
+                  child: _buildEmptyState(l10n),
                 )
               : SliverPadding(
                   padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -315,7 +318,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppLocalizations? l10n) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppTheme.spacingXXL),
@@ -337,7 +340,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: AppTheme.spacingXXL),
             Text(
-              'No students linked yet',
+              l10n?.noStudentsLinked ?? 'No students linked yet',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: AppTheme.textPrimary,
                 fontWeight: FontWeight.bold,
@@ -346,7 +349,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'Contact your school to link your children to your account',
+              l10n?.contactSchoolToLink ?? 'Contact your school to link your children to your account',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppTheme.textSecondary,
               ),
@@ -358,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                 // Could navigate to a help screen or contact info
               },
               icon: const Icon(Icons.support_agent_rounded),
-              label: const Text('Contact Support'),
+              label: Text(l10n?.contactSupport ?? 'Contact Support'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppTheme.spacingXXL,
@@ -373,6 +376,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildModernStudentCard(Map<String, dynamic> student, int index) {
+    final l10n = AppLocalizations.of(context);
     final grade = student['grade'] ?? '';
     final studentName = student['studentName'] ?? '';
     final studentId = student['studentId'] ?? '';
@@ -450,7 +454,7 @@ class _HomePageState extends State<HomePage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  'Grade $grade',
+                                  '${l10n?.grade ?? 'Grade'} $grade',
                                   style: TextStyle(
                                     color: AppTheme.primaryColor,
                                     fontSize: 12,
@@ -504,7 +508,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Active',
+                            l10n?.active ?? 'Active',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.successColor,
@@ -525,7 +529,7 @@ class _HomePageState extends State<HomePage> {
                     Expanded(
                       child: _buildModernInfoCard(
                         icon: Icons.access_time_rounded,
-                        label: 'Leave Time',
+                        label: l10n?.leaveTime ?? 'Leave Time',
                         value: leaveTime,
                         color: AppTheme.infoColor,
                       ),
@@ -538,7 +542,7 @@ class _HomePageState extends State<HomePage> {
                             .doc('${studentId}_${DateFormat('yyyy-MM-dd').format(DateTime.now())}')
                             .snapshots(),
                         builder: (context, snapshot) {
-                          String status = 'Not Marked';
+                          String status = l10n?.notMarked ?? 'Not Marked';
                           Color statusColor = Colors.grey;
                           IconData statusIcon = Icons.help_rounded;
                           
@@ -548,22 +552,22 @@ class _HomePageState extends State<HomePage> {
                             
                             switch (attendanceStatus) {
                               case 'present':
-                                status = 'Present';
+                                status = l10n?.present ?? 'Present';
                                 statusColor = AppTheme.successColor;
                                 statusIcon = Icons.check_circle_rounded;
                                 break;
                               case 'absent':
-                                status = 'Absent';
+                                status = l10n?.absent ?? 'Absent';
                                 statusColor = Colors.red;
                                 statusIcon = Icons.cancel_rounded;
                                 break;
                               case 'late':
-                                status = 'Late';
+                                status = l10n?.late ?? 'Late';
                                 statusColor = AppTheme.warningColor;
                                 statusIcon = Icons.schedule_rounded;
                                 break;
                               case 'excused':
-                                status = 'Excused';
+                                status = l10n?.excused ?? 'Excused';
                                 statusColor = AppTheme.infoColor;
                                 statusIcon = Icons.event_note_rounded;
                                 break;
@@ -572,7 +576,7 @@ class _HomePageState extends State<HomePage> {
                           
                           return _buildModernInfoCard(
                             icon: statusIcon,
-                            label: 'Attendance',
+                            label: l10n?.attendance ?? 'Attendance',
                             value: status,
                             color: statusColor,
                           );
@@ -600,7 +604,7 @@ class _HomePageState extends State<HomePage> {
                           size: 20,
                         ),
                         label: Text(
-                          isPendingPickup ? 'Request Sent' : 'Request Pickup',
+                          isPendingPickup ? (l10n?.pickupRequested ?? 'Request Sent') : (l10n?.requestPickup ?? 'Request Pickup'),
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -618,9 +622,9 @@ class _HomePageState extends State<HomePage> {
                       child: OutlinedButton.icon(
                         onPressed: () => _showStudentDetails(context, student),
                         icon: const Icon(Icons.info_outline_rounded, size: 20),
-                        label: const Text(
-                          'Details',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                        label: Text(
+                          l10n?.viewDetails ?? 'Details',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.primaryColor,

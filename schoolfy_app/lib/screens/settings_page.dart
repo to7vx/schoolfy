@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/language_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -19,12 +22,13 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _emergencyAlerts = true;
   bool _biometricLogin = false;
   bool _autoBackup = true;
-  String _selectedLanguage = 'English';
   String _selectedTheme = 'System';
   final User? user = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
@@ -66,9 +70,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'Settings',
-                                  style: TextStyle(
+                                Text(
+                                  l10n?.settings ?? 'Settings',
+                                  style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
@@ -225,42 +229,42 @@ class _SettingsPageState extends State<SettingsPage> {
               delegate: SliverChildListDelegate([
                 // Notifications Section
                 _buildSettingsSection(
-                  'Notifications',
+                  l10n?.notifications ?? 'Notifications',
                   Icons.notifications_rounded,
                   [
                     _buildSwitchTile(
-                      'Push Notifications',
+                      l10n?.pushNotifications ?? 'Push Notifications',
                       'Receive notifications on your device',
                       _pushNotifications,
                       (value) => setState(() => _pushNotifications = value),
                     ),
                     _buildSwitchTile(
-                      'Email Notifications',
+                      l10n?.emailNotifications ?? 'Email Notifications',
                       'Receive notifications via email',
                       _emailNotifications,
                       (value) => setState(() => _emailNotifications = value),
                     ),
                     _buildSwitchTile(
-                      'SMS Notifications',
+                      l10n?.smsNotifications ?? 'SMS Notifications',
                       'Receive important updates via SMS',
                       _smsNotifications,
                       (value) => setState(() => _smsNotifications = value),
                     ),
                     const Divider(height: 1),
                     _buildSwitchTile(
-                      'Attendance Alerts',
+                      l10n?.attendanceAlerts ?? 'Attendance Alerts',
                       'Get notified about attendance updates',
                       _attendanceAlerts,
                       (value) => setState(() => _attendanceAlerts = value),
                     ),
                     _buildSwitchTile(
-                      'Grade Alerts',
+                      l10n?.gradeAlerts ?? 'Grade Alerts',
                       'Get notified about grade changes',
                       _gradeAlerts,
                       (value) => setState(() => _gradeAlerts = value),
                     ),
                     _buildSwitchTile(
-                      'Emergency Alerts',
+                      l10n?.emergencyAlerts ?? 'Emergency Alerts',
                       'Receive emergency notifications',
                       _emergencyAlerts,
                       (value) => setState(() => _emergencyAlerts = value),
@@ -272,26 +276,26 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // Security Section
                 _buildSettingsSection(
-                  'Security & Privacy',
+                  l10n?.security ?? 'Security & Privacy',
                   Icons.security_rounded,
                   [
                     _buildSwitchTile(
-                      'Biometric Login',
-                      'Use fingerprint or face unlock',
+                      l10n?.biometricLogin ?? 'Biometric Login',
+                      l10n?.biometricLoginDescription ?? 'Use fingerprint or face unlock',
                       _biometricLogin,
                       (value) => setState(() => _biometricLogin = value),
                     ),
                     _buildTapTile(
-                      'Change Password',
-                      'Update your account password',
+                      l10n?.changePassword ?? 'Change Password',
+                      l10n?.updatePassword ?? 'Update your account password',
                       Icons.lock_rounded,
                       () {
                         // Change password
                       },
                     ),
                     _buildTapTile(
-                      'Two-Factor Authentication',
-                      'Add an extra layer of security',
+                      l10n?.twoFactorAuth ?? 'Two-Factor Authentication',
+                      l10n?.twoFactorAuthDescription ?? 'Add an extra layer of security',
                       Icons.shield_rounded,
                       () {
                         // Setup 2FA
@@ -304,16 +308,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // App Preferences Section
                 _buildSettingsSection(
-                  'App Preferences',
+                  l10n?.appPreferences ?? 'App Preferences',
                   Icons.tune_rounded,
                   [
-                    _buildDropdownTile(
-                      'Language',
-                      'Choose your preferred language',
-                      _selectedLanguage,
-                      ['English', 'Arabic', 'French'],
-                      (value) => setState(() => _selectedLanguage = value!),
-                    ),
+                    _buildLanguageSelector(),
                     _buildDropdownTile(
                       'Theme',
                       'Choose your app theme',
@@ -334,36 +332,36 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // Support Section
                 _buildSettingsSection(
-                  'Support',
+                  l10n?.support ?? 'Support',
                   Icons.help_rounded,
                   [
                     _buildTapTile(
-                      'Help Center',
-                      'Get help and support',
+                      l10n?.helpCenter ?? 'Help Center',
+                      l10n?.findAnswers ?? 'Get help and support',
                       Icons.help_center_rounded,
                       () {
                         // Open help center
                       },
                     ),
                     _buildTapTile(
-                      'Contact Support',
-                      'Get in touch with our team',
+                      l10n?.contactSupport ?? 'Contact Support',
+                      l10n?.getHelp ?? 'Get in touch with our team',
                       Icons.support_agent_rounded,
                       () {
                         // Contact support
                       },
                     ),
                     _buildTapTile(
-                      'Terms of Service',
-                      'Read our terms and conditions',
+                      l10n?.termsOfService ?? 'Terms of Service',
+                      l10n?.readTerms ?? 'Read our terms and conditions',
                       Icons.description_rounded,
                       () {
                         // Show terms
                       },
                     ),
                     _buildTapTile(
-                      'Privacy Policy',
-                      'Learn about our privacy practices',
+                      l10n?.privacyPolicy ?? 'Privacy Policy',
+                      l10n?.readPrivacyPolicy ?? 'Learn about our privacy practices',
                       Icons.privacy_tip_rounded,
                       () {
                         // Show privacy policy
@@ -376,23 +374,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 
                 // Account Actions Section
                 _buildSettingsSection(
-                  'Account',
+                  l10n?.account ?? 'Account',
                   Icons.account_circle_rounded,
                   [
                     _buildTapTile(
-                      'Export Data',
-                      'Download your account data',
+                      l10n?.exportData ?? 'Export Data',
+                      l10n?.downloadData ?? 'Download your account data',
                       Icons.download_rounded,
                       () {
                         // Export data
                       },
                     ),
                     _buildTapTile(
-                      'Delete Account',
-                      'Permanently delete your account',
+                      l10n?.deleteAccount ?? 'Delete Account',
+                      l10n?.permanentlyDelete ?? 'Permanently delete your account',
                       Icons.delete_forever_rounded,
                       () {
-                        _showDeleteAccountDialog();
+                        _showDeleteAccountDialog(l10n);
                       },
                       isDestructive: true,
                     ),
@@ -413,7 +411,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: Colors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                      onTap: () => _showLogoutConfirmation(),
+                      onTap: () => _showLogoutConfirmation(l10n),
                       child: Padding(
                         padding: const EdgeInsets.all(AppTheme.spacingL),
                         child: Row(
@@ -431,21 +429,21 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                             ),
                             const SizedBox(width: AppTheme.spacingL),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Sign Out',
-                                    style: TextStyle(
+                                    l10n?.signOut ?? 'Sign Out',
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.red,
                                     ),
                                   ),
                                   Text(
-                                    'Sign out of your account',
-                                    style: TextStyle(
+                                    l10n?.signOutDescription ?? 'Sign out of your account',
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       color: Colors.red,
                                     ),
@@ -608,6 +606,65 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildLanguageSelector() {
+    return Consumer<LanguageProvider>(
+      builder: (context, languageProvider, child) {
+        final l10n = AppLocalizations.of(context);
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingL,
+            vertical: AppTheme.spacingS,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n?.language ?? 'Language',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      l10n?.chooseLanguage ?? 'Choose your preferred language',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              DropdownButton<String>(
+                value: languageProvider.currentLocale.languageCode,
+                onChanged: (String? newLanguageCode) {
+                  if (newLanguageCode != null) {
+                    languageProvider.setLanguage(newLanguageCode);
+                  }
+                },
+                underline: Container(),
+                items: [
+                  DropdownMenuItem<String>(
+                    value: 'en',
+                    child: Text(l10n?.english ?? 'English'),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: 'ar',
+                    child: Text(l10n?.arabic ?? 'العربية'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildDropdownTile(String title, String subtitle, String value, List<String> options, Function(String?) onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -662,7 +719,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return words[0][0];
   }
 
-  void _showLogoutConfirmation() {
+  void _showLogoutConfirmation(AppLocalizations? l10n) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -678,18 +735,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 size: 28,
               ),
               const SizedBox(width: 12),
-              const Text('Sign Out'),
+              Text(l10n?.signOut ?? 'Sign Out'),
             ],
           ),
-          content: const Text(
-            'Are you sure you want to sign out of your account?',
-            style: TextStyle(fontSize: 16),
+          content: Text(
+            l10n?.signOutConfirmation ?? 'Are you sure you want to sign out of your account?',
+            style: const TextStyle(fontSize: 16),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Cancel',
+                l10n?.cancel ?? 'Cancel',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w600,
@@ -708,9 +765,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   borderRadius: BorderRadius.circular(AppTheme.radiusM),
                 ),
               ),
-              child: const Text(
-                'Sign Out',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              child: Text(
+                l10n?.signOut ?? 'Sign Out',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -719,7 +776,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showDeleteAccountDialog() {
+  void _showDeleteAccountDialog(AppLocalizations? l10n) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -735,18 +792,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 size: 28,
               ),
               const SizedBox(width: 12),
-              const Text('Delete Account'),
+              Text(l10n?.deleteAccount ?? 'Delete Account'),
             ],
           ),
-          content: const Text(
-            'This action cannot be undone. All your data will be permanently deleted.',
-            style: TextStyle(fontSize: 16),
+          content: Text(
+            l10n?.deleteAccountWarning ?? 'This action cannot be undone. All your data will be permanently deleted.',
+            style: const TextStyle(fontSize: 16),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'Cancel',
+                l10n?.cancel ?? 'Cancel',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w600,
@@ -765,9 +822,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   borderRadius: BorderRadius.circular(AppTheme.radiusM),
                 ),
               ),
-              child: const Text(
-                'Delete',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              child: Text(
+                l10n?.delete ?? 'Delete',
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ],

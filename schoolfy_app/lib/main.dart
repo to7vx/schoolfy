@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/phone_auth_screen.dart';
@@ -13,6 +14,8 @@ import 'screens/authorized_guardians_page.dart';
 import 'screens/settings_page.dart';
 import 'screens/profile_setup_page.dart';
 import 'services/notification_service.dart';
+import 'l10n/app_localizations.dart';
+import 'providers/language_provider.dart';
 
 // Background message handler (must be top-level function)
 @pragma('vm:entry-point')
@@ -30,7 +33,12 @@ void main() async {
   // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => LanguageProvider()..initialize(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -38,31 +46,37 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Schoolfy Guardian',
-      theme: AppTheme.lightTheme,
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('ar', ''),
-      ],
-      localeResolutionCallback: (locale, supportedLocales) {
-        for (var supportedLocale in supportedLocales) {
-          if (supportedLocale.languageCode == locale?.languageCode) {
-            return supportedLocale;
-          }
-        }
-        return supportedLocales.first;
-      },
-      home: const AuthGate(),
-      routes: {
-        '/profile-setup': (context) => const ProfileSetupPage(),
-        '/main': (context) => const AuthGate(),
+    return Consumer<LanguageProvider>(
+      builder: (context, languageProvider, child) {
+        return MaterialApp(
+          title: 'Schoolfy Guardian',
+          theme: AppTheme.lightTheme,
+          debugShowCheckedModeBanner: false,
+          locale: languageProvider.currentLocale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('ar', ''),
+          ],
+          localeResolutionCallback: (locale, supportedLocales) {
+            for (var supportedLocale in supportedLocales) {
+              if (supportedLocale.languageCode == locale?.languageCode) {
+                return supportedLocale;
+              }
+            }
+            return supportedLocales.first;
+          },
+          home: const AuthGate(),
+          routes: {
+            '/profile-setup': (context) => const ProfileSetupPage(),
+            '/main': (context) => const AuthGate(),
+          },
+        );
       },
     );
   }
@@ -771,6 +785,7 @@ class _MainNavScreenState extends State<_MainNavScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final pages = [
       HomePage(students: widget.students),
       const StudentsPage(),
@@ -797,10 +812,10 @@ class _MainNavScreenState extends State<_MainNavScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(0, Icons.home_rounded, 'Home'),
-                _buildNavItem(1, Icons.school_rounded, 'Students'),
-                _buildNavItem(2, Icons.group_rounded, 'Guardians'),
-                _buildNavItem(3, Icons.settings_rounded, 'Settings'),
+                _buildNavItem(0, Icons.home_rounded, l10n?.home ?? 'Home'),
+                _buildNavItem(1, Icons.school_rounded, l10n?.students ?? 'Students'),
+                _buildNavItem(2, Icons.group_rounded, l10n?.guardians ?? 'Guardians'),
+                _buildNavItem(3, Icons.settings_rounded, l10n?.settings ?? 'Settings'),
               ],
             ),
           ),
