@@ -53,18 +53,6 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: _cleanupEmptyGuardianIds,
-                icon: const Icon(Icons.cleaning_services, size: 16),
-                label: const Text('Cleanup DB'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  minimumSize: Size.zero,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -259,7 +247,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                         radius: 20,
                         backgroundColor: AppTheme.successColor.withOpacity(0.2),
                         child: Text(
-                          (guardian['name'] ?? '?').substring(0, 1).toUpperCase(),
+                          (guardian['fullName'] ?? guardian['firstName'] ?? '?').substring(0, 1).toUpperCase(),
                           style: const TextStyle(
                             color: AppTheme.successColor,
                             fontWeight: FontWeight.bold,
@@ -272,7 +260,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              guardian['name'] ?? 'Unknown',
+                              guardian['fullName'] ?? guardian['firstName'] ?? 'Unknown Guardian',
                               style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             Text(
@@ -389,7 +377,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                           radius: 16,
                           backgroundColor: AppTheme.accentColor.withOpacity(0.2),
                           child: Text(
-                            (guardian['name'] ?? '?').substring(0, 1).toUpperCase(),
+                            (guardian['fullName'] ?? guardian['firstName'] ?? '?').substring(0, 1).toUpperCase(),
                             style: const TextStyle(
                               color: AppTheme.accentColor,
                               fontWeight: FontWeight.bold,
@@ -403,7 +391,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                guardian['name'] ?? 'Unknown',
+                                guardian['fullName'] ?? guardian['firstName'] ?? 'Unknown Guardian',
                                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                               ),
                               Text(
@@ -463,58 +451,6 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
     );
   }
 
-  // Cleanup function to remove empty guardian IDs from all student records
-  Future<void> _cleanupEmptyGuardianIds() async {
-    try {
-      print('DEBUG: Starting cleanup of empty guardian IDs...');
-      final studentsSnapshot = await _firestore.collection('students').get();
-      
-      for (final doc in studentsSnapshot.docs) {
-        final student = doc.data();
-        final authorizedIds = List<String>.from(student['authorizedGuardianIds'] ?? []);
-        final cleanedIds = authorizedIds.where((id) => id.isNotEmpty).toList();
-        
-        if (authorizedIds.length != cleanedIds.length) {
-          print('DEBUG: Cleaning student ${doc.id} - removing ${authorizedIds.length - cleanedIds.length} empty IDs');
-          await _firestore.collection('students').doc(doc.id).update({
-            'authorizedGuardianIds': cleanedIds,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-        
-        // Also check primary guardian ID
-        final primaryGuardianId = student['primaryGuardianId'];
-        if (primaryGuardianId == '') {
-          print('DEBUG: Cleaning student ${doc.id} - removing empty primary guardian ID');
-          await _firestore.collection('students').doc(doc.id).update({
-            'primaryGuardianId': null,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-      }
-      
-      print('DEBUG: Cleanup completed successfully');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Database cleanup completed successfully'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
-      }
-    } catch (e) {
-      print('DEBUG: Error during cleanup: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error during cleanup: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   void _showLinkGuardianDialog(String studentId, Map<String, dynamic> student) {
     showDialog(
       context: context,
@@ -539,9 +475,9 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                   
                   return ListTile(
                     leading: CircleAvatar(
-                      child: Text((guardian['name'] ?? '?').substring(0, 1).toUpperCase()),
+                      child: Text((guardian['fullName'] ?? guardian['firstName'] ?? '?').substring(0, 1).toUpperCase()),
                     ),
-                    title: Text(guardian['name'] ?? 'Unknown'),
+                    title: Text(guardian['fullName'] ?? guardian['firstName'] ?? 'Unknown Guardian'),
                     subtitle: Text(guardian['phone'] ?? guardian['email'] ?? 'No contact'),
                     onTap: () async {
                       print('DEBUG: Primary Guardian Dialog - Student ID: "$studentId", Guardian Doc ID: "${guardians[index].id}"');
@@ -605,9 +541,9 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                   
                   return ListTile(
                     leading: CircleAvatar(
-                      child: Text((guardian['name'] ?? '?').substring(0, 1).toUpperCase()),
+                      child: Text((guardian['fullName'] ?? guardian['firstName'] ?? '?').substring(0, 1).toUpperCase()),
                     ),
-                    title: Text(guardian['name'] ?? 'Unknown'),
+                    title: Text(guardian['fullName'] ?? guardian['firstName'] ?? 'Unknown Guardian'),
                     subtitle: Text(guardian['phone'] ?? guardian['email'] ?? 'No contact'),
                     onTap: () async {
                       print('DEBUG: Add Authorized Guardian Dialog - Student ID: "$studentId", Guardian Doc ID: "${guardians[index].id}"');

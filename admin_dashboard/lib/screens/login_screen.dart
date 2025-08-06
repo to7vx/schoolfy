@@ -262,20 +262,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: _isLoading ? null : _showForgotPasswordDialog,
                           child: Text(l10n.forgotPassword),
                         ),
-                        
-                        const SizedBox(height: 8),
-                        
-                        // Create Admin Account (for first-time setup)
-                        TextButton(
-                          onPressed: _isLoading ? null : _showCreateAdminDialog,
-                          child: Text(
-                            l10n.createAdminAccount,
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -284,114 +270,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _showCreateAdminDialog() {
-    final l10n = AppLocalizations.of(context)!;
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.createAdminAccount),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Create the first admin account for this dashboard.'),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: l10n.email,
-                  prefixIcon: const Icon(Icons.email_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an email';
-                  }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: l10n.password,
-                  prefixIcon: const Icon(Icons.lock_outlined),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                try {
-                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                  final error = await authProvider.createAdminAccount(
-                    emailController.text,
-                    passwordController.text,
-                  );
-                  
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                    if (error == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Admin account created successfully! You can now sign in.'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: $error'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              }
-            },
-            child: Text(l10n.createAccount),
-          ),
-        ],
       ),
     );
   }

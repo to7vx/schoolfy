@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
@@ -286,36 +287,33 @@ class SettingsScreen extends StatelessWidget {
             activeColor: AppTheme.primaryColor,
           ),
         ),
-        const Divider(),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.format_textdirection_r_to_l),
-          title: const Text('Text Direction'),
-          subtitle: Text(localeProvider.isArabic ? 'Right to Left (RTL)' : 'Left to Right (LTR)'),
-          trailing: Icon(
-            localeProvider.isArabic ? Icons.format_textdirection_r_to_l : Icons.format_textdirection_l_to_r,
-            color: AppTheme.primaryColor,
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildDisplaySettings(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.refresh),
-          title: const Text('Auto Refresh'),
-          subtitle: const Text('Real-time updates enabled'),
-          trailing: Switch(
-            value: true,
-            onChanged: null, // Disabled for now
-            activeColor: AppTheme.primaryColor,
-          ),
-        ),
-      ],
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Column(
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              ),
+              title: const Text('Dark Mode'),
+              subtitle: Text(themeProvider.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled'),
+              trailing: Switch(
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.toggleTheme();
+                },
+                activeColor: AppTheme.primaryColor,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -46,8 +46,8 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   bool _isConnected = true;
   String _todayKey = '';
   
-  // Auto-cleanup configuration - removes pickup entries after 5 minutes
-  static const Duration _autoCleanupDuration = Duration(minutes: 5);
+  // Auto-cleanup configuration - removes pickup entries after 1 minute
+  static const Duration _autoCleanupDuration = Duration(minutes: 1);
   Timer? _cleanupTimer;
 
   @override
@@ -167,9 +167,9 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
     final now = DateTime.now();
     final difference = now.difference(pickupTime);
     
-    if (difference.inMinutes < 2) {
+    if (difference.inSeconds < 30) {
       return Colors.green.shade600; // Very recent - green
-    } else if (difference.inMinutes < 5) {
+    } else if (difference.inSeconds < 45) {
       return Colors.orange.shade600; // Recent - orange  
     } else {
       return Colors.red.shade600; // Old - red
@@ -179,7 +179,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   bool _isUrgentPickup(DateTime pickupTime) {
     final now = DateTime.now();
     final difference = now.difference(pickupTime);
-    return difference.inMinutes >= 5; // Consider 5+ minutes as urgent
+    return difference.inSeconds >= 45; // Consider 45+ seconds as urgent since cleanup is at 1 minute
   }
 
   @override
@@ -549,34 +549,54 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       final now = DateTime.now();
       final todayRef = _database.child('pickupQueue').child(_todayKey);
       
+      print('Auto-cleanup: Starting cleanup for $_todayKey at ${now.toIso8601String()}');
+      
       final snapshot = await todayRef.get();
       
       if (snapshot.exists && snapshot.value != null) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
         int cleanedCount = 0;
         
+        print('Auto-cleanup: Found ${data.length} entries to check');
+        
         for (final entry in data.entries) {
           try {
             final pickupData = Map<String, dynamic>.from(entry.value as Map);
-            final timeString = pickupData['time'];
+            final requestTime = pickupData['requestTime'];
             
-            if (timeString == null) continue;
+            if (requestTime == null) {
+              print('Auto-cleanup: Entry ${entry.key} has no requestTime, skipping');
+              continue;
+            }
             
             DateTime pickupTime;
             try {
-              pickupTime = DateTime.parse(timeString);
+              // Handle both numeric timestamp and string formats
+              if (requestTime is num) {
+                pickupTime = DateTime.fromMillisecondsSinceEpoch(requestTime.toInt());
+              } else if (requestTime is String) {
+                pickupTime = DateTime.parse(requestTime);
+              } else {
+                print('Auto-cleanup: Entry ${entry.key} has invalid requestTime format: $requestTime');
+                continue;
+              }
             } catch (parseError) {
+              print('Auto-cleanup: Failed to parse time for entry ${entry.key}: $requestTime');
               continue;
             }
             
             final age = now.difference(pickupTime);
             
+            print('Auto-cleanup: Entry ${entry.key} age: ${age.inSeconds} seconds (limit: ${_autoCleanupDuration.inSeconds} seconds)');
+            
             // Remove entries older than the cleanup duration
             if (age > _autoCleanupDuration) {
               await todayRef.child(entry.key).remove();
               cleanedCount++;
+              print('Auto-cleanup: Removed entry ${entry.key} (${pickupData['studentName']}) - age: ${age.inSeconds} seconds');
             }
           } catch (entryError) {
+            print('Auto-cleanup: Error processing entry ${entry.key}: $entryError');
             // Continue processing other entries if one fails
             continue;
           }
@@ -584,7 +604,11 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         
         if (cleanedCount > 0) {
           print('Auto-cleanup: removed $cleanedCount old pickup entries');
+        } else {
+          print('Auto-cleanup: No entries to clean up');
         }
+      } else {
+        print('Auto-cleanup: No pickup queue data found for today');
       }
     } catch (e) {
       print('Auto-cleanup error: $e');
@@ -608,12 +632,30 @@ class PickupEntry {
   });
 
   factory PickupEntry.fromJson(String id, Map<String, dynamic> json) {
+    DateTime time;
+    final requestTime = json['requestTime'];
+    
+    if (requestTime is num) {
+      // Handle Firebase ServerValue.timestamp (numeric timestamp)
+      time = DateTime.fromMillisecondsSinceEpoch(requestTime.toInt());
+    } else if (requestTime is String) {
+      // Handle string timestamp
+      try {
+        time = DateTime.parse(requestTime);
+      } catch (e) {
+        time = DateTime.now();
+      }
+    } else {
+      // Fallback to current time if no valid timestamp
+      time = DateTime.now();
+    }
+    
     return PickupEntry(
       id: id,
       studentId: json['studentId'] ?? '',
       studentName: json['studentName'] ?? '',
       grade: json['grade'] ?? '',
-      time: DateTime.parse(json['time'] ?? DateTime.now().toIso8601String()),
+      time: time,
     );
   }
 }
