@@ -196,4 +196,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortByGrade => 'Sort by Grade';
   String get class_ => 'Class';
   String get viewDetails => 'Details';
+  String get pickupRequestSent => 'Pickup request sent for';
 }

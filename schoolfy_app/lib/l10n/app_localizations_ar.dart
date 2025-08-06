@@ -211,6 +211,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get late => 'متأخر';
   String get excused => 'معذور';
   String get pickupRequested => 'تم طلب الاستلام';
+  String get pickupRequestSent => 'تم إرسال طلب الاستلام لـ';
   String get viewDetails => 'تفاصيل';
   
   // Students Page

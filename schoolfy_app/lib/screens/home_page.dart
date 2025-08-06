@@ -1314,26 +1314,18 @@ class _HomePageState extends State<HomePage> {
           .set(pickupRequest);
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Pickup request sent for ${student['studentName']}'),
+            content: Text('${l10n?.pickupRequestSent ?? 'Pickup request sent for'} ${student['studentName']}'),
             backgroundColor: Colors.green,
-            action: SnackBarAction(
-              label: 'Undo',
-              textColor: Colors.white,
-              onPressed: () {
-                // Remove from pending requests if user wants to undo
-                setState(() {
-                  _pendingPickupRequests.remove(studentId);
-                });
-              },
-            ),
+            duration: const Duration(seconds: 2), // Auto dismiss after 2 seconds
           ),
         );
       }
 
-      // Auto-remove from pending requests after 30 seconds
-      Timer(const Duration(seconds: 30), () {
+      // Auto-remove from pending requests after 2 seconds
+      Timer(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() {
             _pendingPickupRequests.remove(studentId);

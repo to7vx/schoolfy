@@ -404,6 +404,12 @@ class AppLocalizations {
         locale: localeName,
       );
 
+  String get pickupRequestSent => Intl.message(
+        'Pickup request sent for',
+        name: 'pickupRequestSent',
+        locale: localeName,
+      );
+
   String get viewDetails => Intl.message(
         'Details',
         name: 'viewDetails',
