@@ -7,7 +7,7 @@ enum AppThemeMode {
 }
 
 class ThemeProvider with ChangeNotifier {
-  AppThemeMode _themeMode = AppThemeMode.system;
+  AppThemeMode _themeMode = AppThemeMode.light;
 
   AppThemeMode get themeMode => _themeMode;
 
