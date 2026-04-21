@@ -135,6 +135,55 @@
       opacity: 0;
       transition: opacity 0.5s ease-out;
     }
+
+    #hint-box {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 99999;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 18px 20px;
+      color: #fff;
+      backdrop-filter: blur(12px);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-width: 200px;
+      pointer-events: none;
+    }
+
+    #hint-box .hint-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 12px;
+    }
+
+    #hint-box .hint-row {
+      margin-bottom: 10px;
+    }
+
+    #hint-box .hint-row:last-child { margin-bottom: 0; }
+
+    #hint-box .hint-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 3px;
+    }
+
+    #hint-box .hint-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    #hint-box .hint-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.15);
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -147,6 +196,19 @@
     <div class="title">Schoolfy Admin</div>
     <div class="subtitle">Dashboard Loading...</div>
     <div class="spinner"></div>
+  </div>
+
+  <div id="hint-box">
+    <div class="hint-title">Demo Credentials</div>
+    <div class="hint-row">
+      <div class="hint-label">Email</div>
+      <div class="hint-value">admin@schoolfy.com</div>
+    </div>
+    <div class="hint-divider"></div>
+    <div class="hint-row">
+      <div class="hint-label">Password</div>
+      <div class="hint-value">Admin123</div>
+    </div>
   </div>
 
   <script>
