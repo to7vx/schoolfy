@@ -1,0 +1,68 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-admin:
+    name: Build & Deploy schoolfy-admin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: schoolfy-admin
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: schoolfy-admin
+        run: flutter build web --release
+
+      - name: Prepare deploy folder
+        run: cp schoolfy-admin/vercel.json schoolfy-admin/build/web/vercel.json
+
+      - name: Deploy to Vercel (production)
+        working-directory: schoolfy-admin/build/web
+        run: npx vercel deploy . --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_ADMIN_PROJECT_ID }}
+
+  deploy-display:
+    name: Build & Deploy schoolfy-display
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: schoolfy-display
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: schoolfy-display
+        run: flutter build web --release
+
+      - name: Prepare deploy folder
+        run: cp schoolfy-display/vercel.json schoolfy-display/build/web/vercel.json
+
+      - name: Deploy to Vercel (production)
+        working-directory: schoolfy-display/build/web
+        run: npx vercel deploy . --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_DISPLAY_PROJECT_ID }}
