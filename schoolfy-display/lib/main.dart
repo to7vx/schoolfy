@@ -45,8 +45,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   DateTime _lastUpdate = DateTime.now();
   bool _isConnected = true;
   String _todayKey = '';
-  
-  // Auto-cleanup configuration - removes pickup entries after 1 minute
+
   static const Duration _autoCleanupDuration = Duration(minutes: 1);
   Timer? _cleanupTimer;
 
@@ -55,8 +54,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
     super.initState();
     _todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
     _setupPickupListener();
-    
-    // Auto-refresh every 30 seconds to ensure connection
+
     Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted) {
         setState(() {
@@ -64,8 +62,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         });
       }
     });
-    
-    // Start auto-cleanup timer - runs every minute to check for old entries
+
     _cleanupTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) {
         _performAutoCleanup();
@@ -80,10 +77,8 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   }
 
   void _setupPickupListener() {
-    print('Setting up pickup listener for path: pickupQueue/$_todayKey');
     _database.child('pickupQueue').child(_todayKey).onValue.listen(
       (DatabaseEvent event) {
-        print('Received database event: ${event.snapshot.value}');
         if (mounted) {
           setState(() {
             _isConnected = true;
@@ -93,7 +88,6 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         }
       },
       onError: (error) {
-        print('Database error: $error');
         if (mounted) {
           setState(() {
             _isConnected = false;
@@ -105,34 +99,25 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
 
   Map<String, List<PickupEntry>> _processPickupData(DataSnapshot snapshot) {
     final Map<String, List<PickupEntry>> result = {};
-    
-    print('Processing pickup data...');
-    print('Snapshot exists: ${snapshot.exists}');
-    print('Snapshot value: ${snapshot.value}');
-    
+
     if (snapshot.value != null) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      
-      print('Data entries: ${data.length}');
-      
+
       for (final entry in data.entries) {
         final pickupData = Map<String, dynamic>.from(entry.value as Map);
-        
         final pickup = PickupEntry.fromJson(entry.key, pickupData);
-        
+
         if (!result.containsKey(pickup.grade)) {
           result[pickup.grade] = [];
         }
         result[pickup.grade]!.add(pickup);
       }
-      
-      // Sort each grade's pickups by time (newest first)
+
       for (final gradePickups in result.values) {
         gradePickups.sort((a, b) => b.time.compareTo(a.time));
       }
     }
-    
-    print('Final result grades: ${result.keys.toList()}');
+
     return result;
   }
 
@@ -145,7 +130,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       '5': Colors.purple.shade400,
       '6': Colors.teal.shade400,
     };
-    
+
     final gradeNumber = grade.substring(0, 1);
     return gradeColors[gradeNumber] ?? Colors.grey.shade400;
   }
@@ -153,7 +138,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   String _getTimeAgoText(DateTime pickupTime) {
     final now = DateTime.now();
     final difference = now.difference(pickupTime);
-    
+
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {
@@ -162,24 +147,24 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       return 'At ${DateFormat('HH:mm').format(pickupTime)}';
     }
   }
-  
+
   Color _getTimeAgoColor(DateTime pickupTime) {
     final now = DateTime.now();
     final difference = now.difference(pickupTime);
-    
+
     if (difference.inSeconds < 30) {
-      return Colors.green.shade600; // Very recent - green
+      return Colors.green.shade600;
     } else if (difference.inSeconds < 45) {
-      return Colors.orange.shade600; // Recent - orange  
+      return Colors.orange.shade600;
     } else {
-      return Colors.red.shade600; // Old - red
+      return Colors.red.shade600;
     }
   }
-  
+
   bool _isUrgentPickup(DateTime pickupTime) {
     final now = DateTime.now();
     final difference = now.difference(pickupTime);
-    return difference.inSeconds >= 45; // Consider 45+ seconds as urgent since cleanup is at 1 minute
+    return difference.inSeconds >= 45;
   }
 
   @override
@@ -227,11 +212,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.school,
-            color: Colors.white,
-            size: 48,
-          ),
+          const Icon(Icons.school, color: Colors.white, size: 48),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -246,11 +227,8 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
                   ),
                 ),
                 Text(
-                  'Students ready for pickup • Auto-cleanup: ${_autoCleanupDuration.inMinutes} min • ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
+                  'Students ready for pickup • ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}',
+                  style: GoogleFonts.inter(fontSize: 16, color: Colors.white70),
                 ),
               ],
             ),
@@ -295,11 +273,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.family_restroom,
-            size: 120,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.family_restroom, size: 120, color: Colors.grey.shade400),
           const SizedBox(height: 24),
           Text(
             'No pickup requests yet',
@@ -312,47 +286,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
           const SizedBox(height: 8),
           Text(
             'Students will appear here when guardians arrive',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              color: Colors.grey.shade500,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Debug Info:',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          Text(
-            'Today key: $_todayKey',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          Text(
-            'Connected: $_isConnected',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: _isConnected ? Colors.green : Colors.red,
-            ),
-          ),
-          Text(
-            'Last update: ${DateFormat('HH:mm:ss').format(_lastUpdate)}',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          Text(
-            'Auto-cleanup: ${_autoCleanupDuration.inMinutes} minutes',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.blue.shade600,
-            ),
+            style: GoogleFonts.inter(fontSize: 18, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -361,7 +295,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
 
   Widget _buildPickupsList() {
     final grades = _pickupsByGrade.keys.toList()..sort();
-    
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: GridView.builder(
@@ -383,7 +317,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
 
   Widget _buildGradeColumn(String grade, List<PickupEntry> pickups) {
     final gradeColor = _getGradeColor(grade);
-    
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -399,7 +333,6 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
       ),
       child: Column(
         children: [
-          // Grade Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -420,8 +353,6 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
               textAlign: TextAlign.center,
             ),
           ),
-          
-          // Students List
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -440,7 +371,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
   Widget _buildStudentCard(PickupEntry pickup, Color gradeColor) {
     final timeDiff = DateTime.now().difference(pickup.time);
     final isRecent = timeDiff.inMinutes < 5;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -452,65 +383,62 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
           width: isRecent ? 2 : 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: gradeColor,
-                radius: 20,
-                child: Text(
-                  pickup.studentName.substring(0, 1).toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+          CircleAvatar(
+            backgroundColor: gradeColor,
+            radius: 20,
+            child: Text(
+              pickup.studentName.substring(0, 1).toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      pickup.studentName,
-                      style: GoogleFonts.inter(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      _getTimeAgoText(pickup.time),
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: _getTimeAgoColor(pickup.time),
-                        fontWeight: _isUrgentPickup(pickup.time) ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isRecent)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'NEW',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  pickup.studentName,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  _getTimeAgoText(pickup.time),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: _getTimeAgoColor(pickup.time),
+                    fontWeight: _isUrgentPickup(pickup.time)
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isRecent)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'NEW',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -526,10 +454,7 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
         children: [
           Text(
             'Last updated: ${DateFormat('HH:mm:ss').format(_lastUpdate)}',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey.shade600),
           ),
           Text(
             'Total students: ${_pickupsByGrade.values.fold(0, (sum, list) => sum + list.length)}',
@@ -548,71 +473,36 @@ class _PickupDisplayScreenState extends State<PickupDisplayScreen> {
     try {
       final now = DateTime.now();
       final todayRef = _database.child('pickupQueue').child(_todayKey);
-      
-      print('Auto-cleanup: Starting cleanup for $_todayKey at ${now.toIso8601String()}');
-      
       final snapshot = await todayRef.get();
-      
+
       if (snapshot.exists && snapshot.value != null) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
-        int cleanedCount = 0;
-        
-        print('Auto-cleanup: Found ${data.length} entries to check');
-        
+
         for (final entry in data.entries) {
           try {
             final pickupData = Map<String, dynamic>.from(entry.value as Map);
             final requestTime = pickupData['requestTime'];
-            
-            if (requestTime == null) {
-              print('Auto-cleanup: Entry ${entry.key} has no requestTime, skipping');
-              continue;
-            }
-            
+
+            if (requestTime == null) continue;
+
             DateTime pickupTime;
-            try {
-              // Handle both numeric timestamp and string formats
-              if (requestTime is num) {
-                pickupTime = DateTime.fromMillisecondsSinceEpoch(requestTime.toInt());
-              } else if (requestTime is String) {
-                pickupTime = DateTime.parse(requestTime);
-              } else {
-                print('Auto-cleanup: Entry ${entry.key} has invalid requestTime format: $requestTime');
-                continue;
-              }
-            } catch (parseError) {
-              print('Auto-cleanup: Failed to parse time for entry ${entry.key}: $requestTime');
+            if (requestTime is num) {
+              pickupTime = DateTime.fromMillisecondsSinceEpoch(requestTime.toInt());
+            } else if (requestTime is String) {
+              pickupTime = DateTime.parse(requestTime);
+            } else {
               continue;
             }
-            
-            final age = now.difference(pickupTime);
-            
-            print('Auto-cleanup: Entry ${entry.key} age: ${age.inSeconds} seconds (limit: ${_autoCleanupDuration.inSeconds} seconds)');
-            
-            // Remove entries older than the cleanup duration
-            if (age > _autoCleanupDuration) {
+
+            if (now.difference(pickupTime) > _autoCleanupDuration) {
               await todayRef.child(entry.key).remove();
-              cleanedCount++;
-              print('Auto-cleanup: Removed entry ${entry.key} (${pickupData['studentName']}) - age: ${age.inSeconds} seconds');
             }
-          } catch (entryError) {
-            print('Auto-cleanup: Error processing entry ${entry.key}: $entryError');
-            // Continue processing other entries if one fails
+          } catch (_) {
             continue;
           }
         }
-        
-        if (cleanedCount > 0) {
-          print('Auto-cleanup: removed $cleanedCount old pickup entries');
-        } else {
-          print('Auto-cleanup: No entries to clean up');
-        }
-      } else {
-        print('Auto-cleanup: No pickup queue data found for today');
       }
-    } catch (e) {
-      print('Auto-cleanup error: $e');
-    }
+    } catch (_) {}
   }
 }
 
@@ -634,22 +524,19 @@ class PickupEntry {
   factory PickupEntry.fromJson(String id, Map<String, dynamic> json) {
     DateTime time;
     final requestTime = json['requestTime'];
-    
+
     if (requestTime is num) {
-      // Handle Firebase ServerValue.timestamp (numeric timestamp)
       time = DateTime.fromMillisecondsSinceEpoch(requestTime.toInt());
     } else if (requestTime is String) {
-      // Handle string timestamp
       try {
         time = DateTime.parse(requestTime);
-      } catch (e) {
+      } catch (_) {
         time = DateTime.now();
       }
     } else {
-      // Fallback to current time if no valid timestamp
       time = DateTime.now();
     }
-    
+
     return PickupEntry(
       id: id,
       studentId: json['studentId'] ?? '',
