@@ -39,53 +39,94 @@
       gap: 36px;
     }
 
+    /* ── Hint card ── */
     #hint-box {
       width: 210px;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 18px;
-      padding: 22px 20px;
+      padding: 22px 20px 18px;
       color: #fff;
       backdrop-filter: blur(12px);
       flex-shrink: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      position: relative;
+      animation: border-pulse 3s ease-in-out infinite;
     }
 
-    #hint-box .hint-title {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
+    @keyframes border-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(167,139,250,0), 0 8px 32px rgba(0,0,0,0.3); }
+      50%       { box-shadow: 0 0 0 3px rgba(167,139,250,0.25), 0 8px 40px rgba(0,0,0,0.4); }
+    }
+
+    .hint-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 14px;
-    }
-
-    #hint-box .hint-row {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin-bottom: 14px;
-    }
-
-    #hint-box .hint-row:last-child { margin-bottom: 0; }
-
-    #hint-box .hint-label {
-      font-size: 11px;
       color: rgba(255,255,255,0.45);
+      margin-bottom: 14px;
+    }
+
+    .hint-row { margin-bottom: 12px; }
+    .hint-row:last-of-type { margin-bottom: 0; }
+
+    .hint-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
       margin-bottom: 4px;
     }
 
-    #hint-box .hint-value {
-      font-size: 15px;
+    .hint-value {
+      font-size: 14px;
       font-weight: 600;
       color: #fff;
-      letter-spacing: 0.02em;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
+      user-select: none;
     }
 
-    #hint-box .hint-divider {
+    .hint-value:hover {
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .hint-value .copy-icon {
+      opacity: 0.35;
+      font-size: 13px;
+      transition: opacity 0.15s;
+    }
+
+    .hint-value:hover .copy-icon { opacity: 0.7; }
+
+    .hint-value.copied {
+      background: rgba(34,197,94,0.12);
+      border-color: rgba(34,197,94,0.3);
+      color: #4ade80;
+    }
+
+    .hint-divider {
       height: 1px;
-      background: rgba(255,255,255,0.1);
-      margin: 14px 0;
+      background: rgba(255,255,255,0.08);
+      margin: 12px 0;
     }
 
+    .hint-footer {
+      font-size: 10px;
+      color: rgba(255,255,255,0.22);
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    /* ── Phone frame ── */
     #phone-frame {
       width: 390px;
       height: 844px;
@@ -101,7 +142,6 @@
         0 50px 120px rgba(0, 0, 0, 0.8);
     }
 
-    /* Dynamic island notch */
     #phone-frame::before {
       content: '';
       position: absolute;
@@ -125,23 +165,12 @@
 
     /* On actual mobile screens — full screen, no frame */
     @media (max-width: 480px), (max-height: 900px) {
-      html, body {
-        display: block;
-        background: #000;
-      }
+      html, body { display: block; background: #000; }
       #layout { display: block; }
       #hint-box { display: none; }
-      #phone-frame {
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
-        box-shadow: none;
-      }
+      #phone-frame { width: 100%; height: 100vh; border-radius: 0; box-shadow: none; }
       #phone-frame::before { display: none; }
-      #flutter-target {
-        width: 100%;
-        height: 100vh;
-      }
+      #flutter-target { width: 100%; height: 100vh; }
     }
   </style>
 </head>
@@ -155,19 +184,45 @@
       <div class="hint-title">Demo Credentials</div>
       <div class="hint-row">
         <div class="hint-label">Phone number</div>
-        <div class="hint-value">+966 512 345 678</div>
+        <div class="hint-value" onclick="copyVal(this, '+966512345678')">
+          <span>+966 512 345 678</span>
+          <span class="copy-icon">⧉</span>
+        </div>
       </div>
       <div class="hint-divider"></div>
       <div class="hint-row">
         <div class="hint-label">Verification code</div>
-        <div class="hint-value">123456</div>
+        <div class="hint-value" onclick="copyVal(this, '123456')">
+          <span>123456</span>
+          <span class="copy-icon">⧉</span>
+        </div>
       </div>
+      <div class="hint-footer">click a field to copy</div>
     </div>
   </div>
 
   <script>
-    // Intercept Flutter's loader before flutter_bootstrap.js runs,
-    // so we can inject hostElement and render Flutter inside #flutter-target.
+    // Force fresh assets — unregister any cached service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      });
+    }
+
+    function copyVal(el, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        const span = el.querySelector('span:first-child');
+        const orig = span.textContent;
+        span.textContent = '✓ Copied!';
+        setTimeout(() => {
+          span.textContent = orig;
+          el.classList.remove('copied');
+        }, 1600);
+      });
+    }
+
+    // Flutter hostElement injection
     window._flutter = window._flutter || {};
     let _interceptedLoader;
     Object.defineProperty(window._flutter, 'loader', {
