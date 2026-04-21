@@ -389,15 +389,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         // Export data
                       },
                     ),
-                    _buildTapTile(
-                      'Delete Account',
-                      'Permanently delete your account',
-                      Icons.delete_forever_rounded,
-                      () {
-                        _showDeleteAccountDialog();
-                      },
-                      isDestructive: true,
-                    ),
                   ],
                 ),
                 
@@ -721,60 +712,4 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusL),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.warning_rounded,
-                color: Colors.red,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              const Text('Delete Account'),
-            ],
-          ),
-          content: const Text(
-            'This action cannot be undone. All your data will be permanently deleted.',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Delete account logic here
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                ),
-              ),
-              child: const Text(
-                'Delete',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

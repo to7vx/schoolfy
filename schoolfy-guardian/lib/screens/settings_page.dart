@@ -379,15 +379,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         // Export data
                       },
                     ),
-                    _buildTapTile(
-                      l10n?.deleteAccount ?? 'Delete Account',
-                      l10n?.permanentlyDelete ?? 'Permanently delete your account',
-                      Icons.delete_forever_rounded,
-                      () {
-                        _showDeleteAccountDialog(l10n);
-                      },
-                      isDestructive: true,
-                    ),
                   ],
                 ),
                 
@@ -800,63 +791,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               child: Text(
                 l10n?.signOut ?? 'Sign Out',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteAccountDialog(AppLocalizations? l10n) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusL),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.warning_rounded,
-                color: Colors.red,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Text(l10n?.deleteAccount ?? 'Delete Account'),
-            ],
-          ),
-          content: Text(
-            l10n?.deleteAccountWarning ?? 'This action cannot be undone. All your data will be permanently deleted.',
-            style: const TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                l10n?.cancel ?? 'Cancel',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // Delete account logic here
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                ),
-              ),
-              child: Text(
-                l10n?.delete ?? 'Delete',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
