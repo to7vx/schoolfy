@@ -33,6 +33,59 @@
       overflow: hidden;
     }
 
+    #layout {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+    }
+
+    #hint-box {
+      width: 210px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      padding: 22px 20px;
+      color: #fff;
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+
+    #hint-box .hint-title {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 14px;
+    }
+
+    #hint-box .hint-row {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin-bottom: 14px;
+    }
+
+    #hint-box .hint-row:last-child { margin-bottom: 0; }
+
+    #hint-box .hint-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 4px;
+    }
+
+    #hint-box .hint-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    #hint-box .hint-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 14px 0;
+    }
+
     #phone-frame {
       width: 390px;
       height: 844px;
@@ -76,6 +129,8 @@
         display: block;
         background: #000;
       }
+      #layout { display: block; }
+      #hint-box { display: none; }
       #phone-frame {
         width: 100%;
         height: 100vh;
@@ -91,8 +146,23 @@
   </style>
 </head>
 <body>
-  <div id="phone-frame">
-    <div id="flutter-target"></div>
+  <div id="layout">
+    <div id="phone-frame">
+      <div id="flutter-target"></div>
+    </div>
+
+    <div id="hint-box">
+      <div class="hint-title">Demo Credentials</div>
+      <div class="hint-row">
+        <div class="hint-label">Phone number</div>
+        <div class="hint-value">+966 512 345 678</div>
+      </div>
+      <div class="hint-divider"></div>
+      <div class="hint-row">
+        <div class="hint-label">Verification code</div>
+        <div class="hint-value">123456</div>
+      </div>
+    </div>
   </div>
 
   <script>
