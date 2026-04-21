@@ -1,38 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Schoolfy — Student Pickup Guardian App">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="schoolfy_app">
+  <meta name="apple-mobile-web-app-title" content="Schoolfy">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>schoolfy_app</title>
+  <title>Schoolfy</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    #phone-frame {
+      width: 390px;
+      height: 844px;
+      border-radius: 44px;
+      overflow: hidden;
+      position: relative;
+      background: #000;
+      flex-shrink: 0;
+      box-shadow:
+        0 0 0 2px #3a3a3c,
+        0 0 0 14px #1c1c1e,
+        0 0 0 16px #3a3a3c,
+        0 50px 120px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Dynamic island notch */
+    #phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 126px;
+      height: 37px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 99999;
+      pointer-events: none;
+    }
+
+    #flutter-target {
+      width: 390px;
+      height: 844px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* On actual mobile screens — full screen, no frame */
+    @media (max-width: 480px), (max-height: 900px) {
+      html, body {
+        display: block;
+        background: #000;
+      }
+      #phone-frame {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      #phone-frame::before { display: none; }
+      #flutter-target {
+        width: 100%;
+        height: 100vh;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="phone-frame">
+    <div id="flutter-target"></div>
+  </div>
+
+  <script>
+    // Intercept Flutter's loader before flutter_bootstrap.js runs,
+    // so we can inject hostElement and render Flutter inside #flutter-target.
+    window._flutter = window._flutter || {};
+    let _interceptedLoader;
+    Object.defineProperty(window._flutter, 'loader', {
+      configurable: true,
+      get() { return _interceptedLoader; },
+      set(loader) {
+        _interceptedLoader = loader;
+        const origLoad = loader.load.bind(loader);
+        loader.load = function(options) {
+          options = options || {};
+          options.config = options.config || {};
+          options.config.hostElement = document.getElementById('flutter-target');
+          return origLoad(options);
+        };
+      }
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

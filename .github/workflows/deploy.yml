@@ -66,3 +66,34 @@ jobs:
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_DISPLAY_PROJECT_ID }}
+
+  deploy-guardian:
+    name: Build & Deploy schoolfy-guardian
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: schoolfy-guardian
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: schoolfy-guardian
+        run: flutter build web --release
+
+      - name: Prepare deploy folder
+        run: cp schoolfy-guardian/vercel.json schoolfy-guardian/build/web/vercel.json
+
+      - name: Deploy to Vercel (production)
+        working-directory: schoolfy-guardian/build/web
+        run: npx vercel deploy . --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_GUARDIAN_PROJECT_ID }}
