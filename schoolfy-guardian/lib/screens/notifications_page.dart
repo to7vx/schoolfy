@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/notification_service.dart';
+import '../theme/app_theme.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -15,7 +16,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void initState() {
     super.initState();
-    // Mark all notifications as read when opening the page
     Future.delayed(const Duration(seconds: 1), () {
       _notificationService.markAllAsRead();
     });
@@ -23,42 +23,72 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textP  = isDark ? AppTheme.darkTextPrimary : AppTheme.textPrimary;
+    final textS  = isDark ? AppTheme.darkTextSecondary : AppTheme.textSecondary;
+    final textM  = isDark ? AppTheme.darkTextTertiary : AppTheme.textTertiary;
+    final bgPage = isDark ? AppTheme.darkBackgroundColor : const Color(0xFFF8FAFC);
+    final bgBar  = isDark ? AppTheme.darkSurfaceColor : Colors.white;
+
     return Scaffold(
+      backgroundColor: bgPage,
       appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: bgBar,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        title: Text(
+          'Notifications',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: textP,
+          ),
+        ),
+        iconTheme: IconThemeData(color: isDark ? AppTheme.darkTextSecondary : AppTheme.textSecondary),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: isDark ? AppTheme.dividerColor : const Color(0xFFE2E8F0),
+          ),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all),
-            onPressed: () async {
-              await _notificationService.markAllAsRead();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('All notifications marked as read'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-            tooltip: 'Mark all as read',
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              onPressed: () async {
+                await _notificationService.markAllAsRead();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('All notifications marked as read'),
+                      backgroundColor: AppTheme.successColor,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusM)),
+                    ),
+                  );
+                }
+              },
+              icon: Icon(Icons.done_all_rounded, size: 18, color: AppTheme.primaryColor),
+              label: Text(
+                'Mark all read',
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      backgroundColor: Colors.grey[50],
       body: StreamBuilder<QuerySnapshot>(
         stream: _notificationService.getUserNotifications(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: Colors.deepPurple,
-              ),
+            return Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
             );
           }
 
@@ -67,26 +97,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red[300],
-                  ),
+                  Icon(Icons.error_outline_rounded, size: 56, color: AppTheme.errorColor),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading notifications',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: textS),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Please try again later',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 13, color: textM),
                   ),
                 ],
               ),
@@ -94,47 +114,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No notifications yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "You'll receive notifications about your children's school activities",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _buildEmptyState(textP, textS, textM);
           }
 
           final notifications = snapshot.data!.docs;
-
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
             itemBuilder: (context, index) {
-              final notification = notifications[index];
-              final data = notification.data() as Map<String, dynamic>;
-              return _buildNotificationCard(notification.id, data);
+              final doc  = notifications[index];
+              final data = doc.data() as Map<String, dynamic>;
+              return _buildNotificationCard(doc.id, data, isDark, textP, textS, textM);
             },
           );
         },
@@ -142,104 +132,148 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _buildNotificationCard(String notificationId, Map<String, dynamic> data) {
-    final isRead = data['read'] ?? false;
+  Widget _buildEmptyState(Color textP, Color textS, Color textM) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(48),
+              ),
+              child: Icon(
+                Icons.notifications_none_rounded,
+                size: 48,
+                color: AppTheme.primaryColor.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No notifications yet',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: textP,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "You'll receive notifications about your children's school activities",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: textS, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(
+    String notificationId,
+    Map<String, dynamic> data,
+    bool isDark,
+    Color textP,
+    Color textS,
+    Color textM,
+  ) {
+    final isRead   = data['read'] ?? false;
     final priority = data['priority'] ?? 'normal';
-    final type = data['type'] ?? 'general';
+    final type     = data['type']     ?? 'general';
     final timestamp = data['timestamp'] as Timestamp?;
-    final grade = data['grade'];
+    final grade    = data['grade'];
 
-    Color priorityColor = Colors.blue;
-    IconData typeIcon = Icons.info;
-
-    // Set colors and icons based on type and priority
+    // Derive type appearance
+    Color typeColor;
+    IconData typeIcon;
     switch (type) {
       case 'leave_time':
-        typeIcon = Icons.access_time;
-        priorityColor = priority == 'high' ? Colors.orange : Colors.blue;
+        typeIcon  = Icons.access_time_rounded;
+        typeColor = priority == 'high' ? AppTheme.warningColor : AppTheme.infoColor;
         break;
       case 'emergency':
-        typeIcon = Icons.warning;
-        priorityColor = Colors.red;
+        typeIcon  = Icons.warning_amber_rounded;
+        typeColor = AppTheme.errorColor;
         break;
       case 'announcement':
-        typeIcon = Icons.campaign;
-        priorityColor = Colors.purple;
+        typeIcon  = Icons.campaign_rounded;
+        typeColor = AppTheme.primaryColor;
         break;
       default:
-        typeIcon = Icons.info;
-        priorityColor = Colors.blue;
+        typeIcon  = Icons.info_rounded;
+        typeColor = AppTheme.primaryColor;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isRead ? Colors.white : Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isRead ? Colors.grey.shade200 : Colors.blue.shade200,
-          width: isRead ? 1 : 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    final cardBg  = isDark
+        ? (isRead ? AppTheme.darkCardColor : AppTheme.darkSurfaceColor)
+        : (isRead ? Colors.white : const Color(0xFFF0F7FF));
+    final cardBdr = isDark
+        ? (isRead ? AppTheme.darkDividerColor : AppTheme.primaryColor.withOpacity(0.3))
+        : (isRead ? const Color(0xFFE2E8F0) : AppTheme.primaryColor.withOpacity(0.25));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
       child: Dismissible(
         key: Key(notificationId),
         direction: DismissDirection.endToStart,
         background: Container(
           decoration: BoxDecoration(
-            color: Colors.red,
-            borderRadius: BorderRadius.circular(12),
+            color: AppTheme.errorColor,
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
           ),
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: const Icon(Icons.delete_rounded, color: Colors.white, size: 22),
         ),
-        onDismissed: (direction) {
+        onDismissed: (_) {
           _notificationService.deleteNotification(notificationId);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Notification deleted'),
-              duration: Duration(seconds: 2),
+            SnackBar(
+              content: const Text('Notification deleted'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusM)),
             ),
           );
         },
         child: InkWell(
           onTap: () {
-            if (!isRead) {
-              _notificationService.markAsRead(notificationId);
-            }
+            if (!isRead) _notificationService.markAsRead(notificationId);
           },
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              border: Border.all(color: cardBdr, width: isRead ? 1 : 1.5),
+              boxShadow: isRead
+                  ? null
+                  : [BoxShadow(
+                      color: AppTheme.primaryColor.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header with icon, title, and timestamp
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: priorityColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: typeColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
                       ),
-                      child: Icon(
-                        typeIcon,
-                        color: priorityColor,
-                        size: 20,
-                      ),
+                      child: Icon(typeIcon, color: typeColor, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -252,9 +286,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 child: Text(
                                   data['title'] ?? 'Notification',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
-                                    color: Colors.black87,
+                                    color: textP,
                                   ),
                                 ),
                               ),
@@ -263,7 +297,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   width: 8,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: priorityColor,
+                                    color: typeColor,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -272,17 +306,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           if (grade != null) ...[
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.deepPurple.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
+                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 'Grade $grade',
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.deepPurple[700],
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                  color: AppTheme.primaryColor,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -292,33 +327,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Message content
+                const SizedBox(height: 10),
                 Text(
                   data['message'] ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                    height: 1.4,
-                  ),
+                  style: TextStyle(fontSize: 13, color: textS, height: 1.4),
                 ),
                 if (timestamp != null) ...[
-                  const SizedBox(height: 12),
-                  // Timestamp
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
+                      Icon(Icons.schedule_rounded, size: 13, color: textM),
                       const SizedBox(width: 4),
                       Text(
                         _formatTimestamp(timestamp),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[500],
-                        ),
+                        style: TextStyle(fontSize: 12, color: textM),
                       ),
                     ],
                   ),
@@ -332,18 +354,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   String _formatTimestamp(Timestamp timestamp) {
-    final dateTime = timestamp.toDate();
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-    } else {
-      return 'Just now';
-    }
+    final diff = DateTime.now().difference(timestamp.toDate());
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'Just now';
   }
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
@@ -183,7 +183,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                     icon: const Icon(Icons.schedule, size: 16),
                     label: const Text('Custom Time for All'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: AppTheme.infoColor,
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -197,7 +197,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Reset All Grades'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: AppTheme.warningColor,
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -219,17 +219,17 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color: const Color(0xFFFEF2F2),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade200),
+              border: Border.all(color: const Color(0xFFFCA5A5)),
             ),
             child: Row(
               children: [
-                Icon(Icons.error, color: Colors.red.shade600),
+                Icon(Icons.error, color: AppTheme.errorColor),
                 const SizedBox(width: 8),
                 Text(
                   'Error loading statistics. Please refresh the page.',
-                  style: TextStyle(color: Colors.red.shade700),
+                  style: TextStyle(color: const Color(0xFFB91C1C)),
                 ),
                 const Spacer(),
                 ElevatedButton(
@@ -321,7 +321,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                       Text(
                         title,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppTheme.textSecondary,
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -415,7 +415,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
             Icon(
               Icons.school,
               size: 64,
-              color: Colors.grey.shade400,
+              color: AppTheme.textMuted,
             ),
             const SizedBox(height: 16),
             Text(
@@ -423,7 +423,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
+                color: AppTheme.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -431,7 +431,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
               'Please add grades in Student Management first',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade500,
+                color: AppTheme.textMuted,
               ),
               textAlign: TextAlign.center,
             ),
@@ -515,7 +515,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         icon = Icons.schedule;
         break;
       default:
-        color = Colors.grey;
+        color = AppTheme.textMuted;
         icon = Icons.radio_button_unchecked;
     }
 
@@ -536,7 +536,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         label = 'SCHEDULED';
         break;
       default:
-        color = Colors.grey;
+        color = AppTheme.textMuted;
         label = 'NOT SENT';
     }
 
@@ -569,7 +569,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
           print('Error in grade subtitle stream for $grade: ${snapshot.error}');
           return Text(
             'Error loading grade data',
-            style: TextStyle(color: Colors.red.shade600, fontSize: 12),
+            style: TextStyle(color: AppTheme.errorColor, fontSize: 12),
           );
         }
 
@@ -612,7 +612,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         return Text(
           '$inSchool/$totalStudents in school$timeText',
           style: TextStyle(
-            color: Colors.grey[600],
+            color: AppTheme.textSecondary,
             fontSize: 12,
           ),
         );
@@ -646,14 +646,14 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                     height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
+                      border: Border.all(color: AppTheme.textMuted),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                        const Icon(Icons.access_time, size: 16, color: AppTheme.textMuted),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -663,7 +663,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                             style: TextStyle(
                               color: _timeControllers[grade]?.text.isNotEmpty == true 
                                   ? Colors.black87 
-                                  : Colors.grey,
+                                  : AppTheme.textMuted,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -695,7 +695,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                 icon: const Icon(Icons.schedule, size: 16),
                 label: const Text('Pick Custom Time'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
+                  backgroundColor: AppTheme.infoColor,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -706,7 +706,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Reset'),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.orange,
+                    foregroundColor: AppTheme.warningColor,
                   ),
                 ),
             ],
@@ -753,16 +753,16 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error, color: Colors.red.shade600, size: 48),
+                        Icon(Icons.error, color: AppTheme.errorColor, size: 48),
                         const SizedBox(height: 16),
                         Text(
                           'Error loading history',
-                          style: TextStyle(color: Colors.red.shade700, fontSize: 18),
+                          style: TextStyle(color: const Color(0xFFB91C1C), fontSize: 18),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Please check your connection and try again.',
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: TextStyle(color: AppTheme.textSecondary),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -784,16 +784,16 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.history, color: Colors.grey, size: 48),
+                        Icon(Icons.history, color: AppTheme.textMuted, size: 48),
                         SizedBox(height: 16),
                         Text(
                           'No leave time history yet',
-                          style: TextStyle(color: Colors.grey, fontSize: 18),
+                          style: TextStyle(color: AppTheme.textMuted, fontSize: 18),
                         ),
                         SizedBox(height: 8),
                         Text(
                           'History will appear here when you send leave time notifications',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: AppTheme.textMuted),
                         ),
                       ],
                     ),
@@ -809,7 +809,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
                     } catch (e) {
                       print('Error building history item $index: $e');
                       return ListTile(
-                        leading: Icon(Icons.error, color: Colors.red.shade600),
+                        leading: Icon(Icons.error, color: AppTheme.errorColor),
                         title: const Text('Error loading this item'),
                         subtitle: Text('Item $index could not be loaded'),
                       );
@@ -864,9 +864,9 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
       case 'scheduled':
         return AppTheme.warningColor;
       case 'reset':
-        return Colors.orange;
+        return AppTheme.warningColor;
       default:
-        return Colors.grey;
+        return AppTheme.textMuted;
     }
   }
 
@@ -993,7 +993,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Leave time set to ${selectedTime.format(context)} for Grade $grade'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -1003,7 +1003,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error setting leave time'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1065,7 +1065,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error setting leave time: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1084,7 +1084,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Notifications sent to Grade $grade guardians'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -1094,7 +1094,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error sending notifications: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1177,7 +1177,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error setting leave time: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1256,7 +1256,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Leave time set to ${selectedTime.format(context)} for all grades ($totalStudents students)'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -1266,7 +1266,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error setting leave time'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1323,7 +1323,7 @@ class _StudentLeaveTimeScreenState extends State<StudentLeaveTimeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error resetting grades: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }

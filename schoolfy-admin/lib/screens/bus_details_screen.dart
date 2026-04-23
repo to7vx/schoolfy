@@ -218,21 +218,21 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: (busData['active'] ?? true)
-                                    ? Colors.green.withOpacity(0.2)
-                                    : Colors.red.withOpacity(0.2),
+                                    ? AppTheme.successColor.withOpacity(0.2)
+                                    : AppTheme.errorColor.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: (busData['active'] ?? true)
-                                      ? Colors.green[300]!
-                                      : Colors.red[300]!,
+                                      ? AppTheme.successColor.withOpacity(0.5)
+                                      : AppTheme.errorColor.withOpacity(0.5),
                                 ),
                               ),
                               child: Text(
                                 (busData['active'] ?? true) ? 'Active' : 'Inactive',
                                 style: TextStyle(
                                   color: (busData['active'] ?? true)
-                                      ? Colors.green[100]
-                                      : Colors.red[100],
+                                      ? AppTheme.successColor
+                                      : AppTheme.errorColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -502,13 +502,13 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700],
+              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
             ),
             children: [
               if (required)
                 const TextSpan(
                   text: ' *',
-                  style: TextStyle(color: Colors.red),
+                  style: TextStyle(color: AppTheme.errorColor),
                 ),
             ],
           ),
@@ -522,18 +522,18 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
             prefixIcon: Icon(icon, size: 20),
             filled: true,
             fillColor: _isEditing 
-                ? (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.white)
-                : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[100]),
+                ? (Theme.of(context).brightness == Brightness.dark ? AppTheme.cardColor : Colors.white)
+                : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF111827) : const Color(0xFFF3F4F6)),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600]! : Colors.grey[300]!,
+                color: Theme.of(context).brightness == Brightness.dark ? AppTheme.textSecondary : const Color(0xFFD1D5DB),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600]! : Colors.grey[300]!,
+                color: Theme.of(context).brightness == Brightness.dark ? AppTheme.textSecondary : const Color(0xFFD1D5DB),
               ),
             ),
             focusedBorder: OutlineInputBorder(
@@ -546,14 +546,14 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!,
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
               ),
             ),
           ),
           style: TextStyle(
             color: _isEditing 
                 ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black)
-                : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700]),
+                : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFFD1D5DB) : const Color(0xFF374151)),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -570,7 +570,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700],
+            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
           ),
         ),
         const SizedBox(height: 8),
@@ -580,17 +580,17 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.traffic, size: 20),
                   filled: true,
-                  fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.white,
+                  fillColor: Theme.of(context).brightness == Brightness.dark ? AppTheme.cardColor : Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600]! : Colors.grey[300]!,
+                      color: Theme.of(context).brightness == Brightness.dark ? AppTheme.textSecondary : const Color(0xFFD1D5DB),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600]! : Colors.grey[300]!,
+                      color: Theme.of(context).brightness == Brightness.dark ? AppTheme.textSecondary : const Color(0xFFD1D5DB),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -619,16 +619,16 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.traffic, size: 20),
                   filled: true,
-                  fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[100],
+                  fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF111827) : const Color(0xFFF3F4F6),
                   disabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!,
+                      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
                     ),
                   ),
                 ),
                 style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700],
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -645,18 +645,18 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
         hintText: 'Enter any additional notes or comments...',
         filled: true,
         fillColor: _isEditing 
-            ? (Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.white)
-            : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[900] : Colors.grey[100]),
+            ? (Theme.of(context).brightness == Brightness.dark ? AppTheme.cardColor : Colors.white)
+            : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF111827) : const Color(0xFFF3F4F6)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600]! : Colors.grey[300]!,
+            color: Theme.of(context).brightness == Brightness.dark ? AppTheme.textSecondary : const Color(0xFFD1D5DB),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600]! : Colors.grey[300]!,
+            color: Theme.of(context).brightness == Brightness.dark ? AppTheme.textSecondary : const Color(0xFFD1D5DB),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -669,14 +669,14 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[200]!,
+            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
           ),
         ),
       ),
       style: TextStyle(
         color: _isEditing 
             ? (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black)
-            : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.grey[700]),
+            : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFFD1D5DB) : const Color(0xFF374151)),
         fontWeight: FontWeight.w500,
       ),
     );
@@ -739,7 +739,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Bus details updated successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -753,7 +753,7 @@ class _BusDetailsScreenState extends State<BusDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
     }

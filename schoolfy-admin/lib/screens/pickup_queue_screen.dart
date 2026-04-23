@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -72,7 +72,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
                 icon: const Icon(Icons.clear_all),
                 label: Text(l10n.clearAll),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppTheme.errorColor,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -169,7 +169,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        const Icon(Icons.error_outline, size: 64, color: AppTheme.errorColor),
                         const SizedBox(height: 16),
                         Text('Error: ${snapshot.error}'),
                       ],
@@ -210,7 +210,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
                         Text(
                           'All students have been picked up or no requests made.',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -241,7 +241,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.filter_list_off, size: 64, color: Colors.grey),
+                        const Icon(Icons.filter_list_off, size: 64, color: AppTheme.textMuted),
                         const SizedBox(height: 16),
                         Text('No pickup requests for grade $_filterGrade'),
                       ],
@@ -363,7 +363,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
                         Text(
                           'Guardian: $guardianName',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -452,7 +452,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
   Widget _buildDetailItem(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
+        Icon(icon, size: 16, color: AppTheme.textSecondary),
         const SizedBox(width: 4),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,7 +461,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
               label,
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.grey[600],
+                color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -521,7 +521,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
               await _clearAllPickupEntries();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: Text(l10n.clearAll),
@@ -588,7 +588,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -612,7 +612,7 @@ class _PickupQueueScreenState extends State<PickupQueueScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }

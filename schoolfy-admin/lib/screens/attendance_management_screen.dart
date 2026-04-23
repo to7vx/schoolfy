@@ -66,7 +66,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading grades: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -167,7 +167,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                     icon: const Icon(Icons.download),
                     label: const Text('Export'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppTheme.successColor,
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -197,8 +197,8 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                         ),
                         filled: true,
                         fillColor: Theme.of(context).brightness == Brightness.dark 
-                            ? Colors.grey[800] 
-                            : Colors.grey[50],
+                            ? AppTheme.cardColor 
+                            : const Color(0xFFF8FAFC),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -220,8 +220,8 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                         ),
                         filled: true,
                         fillColor: Theme.of(context).brightness == Brightness.dark 
-                            ? Colors.grey[800] 
-                            : Colors.grey[50],
+                            ? AppTheme.cardColor 
+                            : const Color(0xFFF8FAFC),
                       ),
                       items: [
                         const DropdownMenuItem(
@@ -402,8 +402,8 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
           decoration: BoxDecoration(
             border: Border.all(
               color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.grey[700]! 
-                  : Colors.grey[300]!
+                  ? AppTheme.borderColor 
+                  : const Color(0xFFE2E8F0)
             ),
             borderRadius: BorderRadius.circular(8),
             color: Theme.of(context).cardColor,
@@ -449,7 +449,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                       value: 'present',
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.green, size: 20),
+                          Icon(Icons.check_circle_rounded, color: AppTheme.successColor, size: 20),
                           SizedBox(width: 8),
                           Text('Present'),
                         ],
@@ -459,7 +459,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                       value: 'absent',
                       child: Row(
                         children: [
-                          Icon(Icons.cancel, color: Colors.red, size: 20),
+                          Icon(Icons.cancel_rounded, color: AppTheme.errorColor, size: 20),
                           SizedBox(width: 8),
                           Text('Absent'),
                         ],
@@ -469,7 +469,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                       value: 'late',
                       child: Row(
                         children: [
-                          Icon(Icons.schedule, color: Colors.orange, size: 20),
+                          Icon(Icons.schedule_rounded, color: AppTheme.warningColor, size: 20),
                           SizedBox(width: 8),
                           Text('Late'),
                         ],
@@ -479,7 +479,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                       value: 'excused',
                       child: Row(
                         children: [
-                          Icon(Icons.event_note, color: Colors.blue, size: 20),
+                          Icon(Icons.event_note_rounded, color: AppTheme.primaryColor, size: 20),
                           SizedBox(width: 8),
                           Text('Excused'),
                         ],
@@ -517,15 +517,15 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
   Color _getStatusColor(String status) {
     switch (status) {
       case 'present':
-        return Colors.green;
+        return AppTheme.successColor;
       case 'absent':
-        return Colors.red;
+        return AppTheme.errorColor;
       case 'late':
-        return Colors.orange;
+        return AppTheme.warningColor;
       case 'excused':
-        return Colors.blue;
+        return AppTheme.primaryColor;
       default:
-        return Colors.grey;
+        return AppTheme.textMuted;
     }
   }
 
@@ -596,8 +596,8 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
       decoration: BoxDecoration(
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.grey[700]! 
-              : Colors.grey[300]!
+              ? AppTheme.borderColor 
+              : const Color(0xFFE2E8F0)
         ),
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).cardColor,
@@ -795,7 +795,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error marking attendance: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -852,7 +852,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Bulk attendance marked successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -861,7 +861,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error marking bulk attendance: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -873,7 +873,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Export functionality coming soon'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }
@@ -883,7 +883,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generating daily report...'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }
@@ -893,7 +893,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generating weekly report...'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }
@@ -903,7 +903,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generating monthly report...'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }
@@ -913,7 +913,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Generating grade report...'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppTheme.primaryColor,
       ),
     );
   }

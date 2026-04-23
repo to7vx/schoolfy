@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../l10n/app_localizations.dart';
@@ -173,7 +173,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
             '+$authorizedCount auth',
             style: TextStyle(
               fontSize: 10,
-              color: Colors.grey[600],
+              color: AppTheme.textSecondary,
             ),
           ),
       ],
@@ -266,7 +266,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                             Text(
                               guardian['phone'] ?? guardian['email'] ?? 'No contact',
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: AppTheme.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -285,12 +285,12 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Invalid student ID'),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppTheme.errorColor,
                                     ),
                                   );
                                 }
                               },
-                        icon: const Icon(Icons.link_off, color: Colors.red),
+                        icon: const Icon(Icons.link_off, color: AppTheme.errorColor),
                         tooltip: 'Unlink Guardian',
                       ),
                     ],
@@ -300,7 +300,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
               return Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text('Guardian not found'),
@@ -397,7 +397,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                               Text(
                                 guardian['phone'] ?? guardian['email'] ?? 'No contact',
                                 style: TextStyle(
-                                  color: Colors.grey[600],
+                                  color: AppTheme.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -416,12 +416,12 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('Invalid IDs (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
-                                        backgroundColor: Colors.red,
+                                        backgroundColor: AppTheme.errorColor,
                                       ),
                                     );
                                   }
                                 },
-                          icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 18),
+                          icon: const Icon(Icons.remove_circle_outline, color: AppTheme.errorColor, size: 18),
                           tooltip: 'Remove Guardian',
                         ),
                       ],
@@ -436,14 +436,14 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.grey),
+                Icon(Icons.info_outline, color: AppTheme.textMuted),
                 SizedBox(width: 8),
-                Text('No authorized guardians', style: TextStyle(color: Colors.grey)),
+                Text('No authorized guardians', style: TextStyle(color: AppTheme.textMuted)),
               ],
             ),
           ),
@@ -490,7 +490,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Invalid selection (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardians[index].id.isEmpty ? "empty" : "valid"})'),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppTheme.errorColor,
                             ),
                           );
                         }
@@ -556,7 +556,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Invalid selection (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardians[index].id.isEmpty ? "empty" : "valid"})'),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppTheme.errorColor,
                             ),
                           );
                         }
@@ -585,7 +585,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Invalid student or guardian ID (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -613,7 +613,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error linking guardian: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -626,7 +626,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid student ID'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -653,7 +653,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error unlinking guardian: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -667,7 +667,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Invalid student or guardian ID (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -694,7 +694,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error adding guardian: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -708,7 +708,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Invalid student or guardian ID (Student: ${studentId.isEmpty ? "empty" : "valid"}, Guardian: ${guardianId.isEmpty ? "empty" : "valid"})'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -735,7 +735,7 @@ class _GuardianLinkingScreenState extends State<GuardianLinkingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error removing guardian: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -234,8 +234,11 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
+        color: isDark ? AppTheme.cardColor : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+        border: Border.all(
+          color: isDark ? AppTheme.borderColor : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,10 +382,10 @@ class SettingsScreen extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () => _showSignOutDialog(context, authProvider, l10n),
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             label: Text(l10n.signOut),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
           ),
@@ -484,7 +487,7 @@ class SettingsScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               '© 2025 Schoolfy. All rights reserved.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
             ),
           ],
         ),
@@ -515,7 +518,7 @@ class SettingsScreen extends StatelessWidget {
               authProvider.signOut();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: Text(l10n.signOut),

@@ -70,9 +70,10 @@ class AuthWrapper extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         if (authProvider.isLoading) {
-          return const Scaffold(
+          return Scaffold(
+            backgroundColor: AppTheme.bgColor,
             body: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
             ),
           );
         }
@@ -83,6 +84,7 @@ class AuthWrapper extends StatelessWidget {
         
         if (!authProvider.isAdmin) {
           return Scaffold(
+            backgroundColor: AppTheme.bgColor,
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -90,7 +92,7 @@ class AuthWrapper extends StatelessWidget {
                   const Icon(
                     Icons.admin_panel_settings_outlined,
                     size: 64,
-                    color: Colors.red,
+                    color: AppTheme.errorColor,
                   ),
                   const SizedBox(height: 16),
                   Text(

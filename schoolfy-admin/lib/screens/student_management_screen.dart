@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:csv/csv.dart';
@@ -267,7 +267,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                   ),
                                   IconButton(
                                     onPressed: () => _showDeleteStudentDialog(doc.id, student['name']),
-                                    icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                    icon: const Icon(Icons.delete, size: 18, color: AppTheme.errorColor),
                                     tooltip: l10n.delete,
                                   ),
                                 ],
@@ -372,7 +372,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                           Text(
                             'Click the settings icon to add grades first',
                             style: TextStyle(
-                              color: Colors.orange[600],
+                              color: AppTheme.warningColor,
                               fontSize: 12,
                             ),
                           ),
@@ -484,7 +484,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Error: $e'),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppTheme.errorColor,
                       ),
                     );
                   }
@@ -529,14 +529,14 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppTheme.errorColor,
                     ),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: Text(l10n.delete),
@@ -603,7 +603,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Import failed: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -687,13 +687,13 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.school, size: 48, color: Colors.grey),
+                            Icon(Icons.school, size: 48, color: AppTheme.textMuted),
                             SizedBox(height: 16),
                             Text(
                               'No grades available',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey,
+                                color: AppTheme.textMuted,
                               ),
                             ),
                             SizedBox(height: 8),
@@ -701,7 +701,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                               'Add your first grade above',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: AppTheme.textMuted,
                               ),
                             ),
                           ],
@@ -745,7 +745,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                     'Created: ${createdAt.toDate().toString().split(' ')[0]}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey[600],
+                                      color: AppTheme.textSecondary,
                                     ),
                                   ),
                               ],
@@ -759,7 +759,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                   tooltip: 'Edit Grade',
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                                  icon: const Icon(Icons.delete, size: 18, color: AppTheme.errorColor),
                                   onPressed: () => _deleteGrade(doc.id, gradeName),
                                   tooltip: 'Delete Grade',
                                 ),
@@ -791,7 +791,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a grade name'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppTheme.warningColor,
         ),
       );
       return;
@@ -824,7 +824,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to add grade: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -897,7 +897,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Failed to update grade: $e'),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppTheme.errorColor,
                       ),
                     );
                   }
@@ -958,7 +958,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -984,7 +984,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to delete grade: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
             ),
           );
         }

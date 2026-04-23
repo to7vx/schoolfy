@@ -45,7 +45,6 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -190,7 +189,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -253,7 +252,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             boxShadow: AppTheme.softShadow,
           ),
@@ -315,7 +314,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
                     child: _buildStatCard(
                       'Present',
                       presentDays.toString(),
-                      Colors.green,
+                      AppTheme.successColor,
                       Icons.check_circle,
                     ),
                   ),
@@ -324,7 +323,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
                     child: _buildStatCard(
                       'Late',
                       lateDays.toString(),
-                      Colors.orange,
+                      AppTheme.warningColor,
                       Icons.schedule,
                     ),
                   ),
@@ -333,7 +332,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
                     child: _buildStatCard(
                       'Absent',
                       absentDays.toString(),
-                      Colors.red,
+                      AppTheme.errorColor,
                       Icons.cancel,
                     ),
                   ),
@@ -398,7 +397,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
           return Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
               boxShadow: AppTheme.softShadow,
             ),
@@ -432,7 +431,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
 
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             boxShadow: AppTheme.softShadow,
           ),
@@ -455,7 +454,7 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
                 itemCount: records.length,
                 separatorBuilder: (context, index) => Divider(
                   height: 1,
-                  color: Colors.grey[200],
+                  color: AppTheme.dividerColor,
                 ),
                 itemBuilder: (context, index) {
                   final record = records[index].data() as Map<String, dynamic>;
@@ -541,9 +540,9 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
   }
 
   Color _getAttendanceRateColor(double rate) {
-    if (rate >= 0.9) return Colors.green;
-    if (rate >= 0.7) return Colors.orange;
-    return Colors.red;
+    if (rate >= 0.9) return AppTheme.successColor;
+    if (rate >= 0.7) return AppTheme.warningColor;
+    return AppTheme.errorColor;
   }
 
   String _getAttendanceRateText(double rate) {
@@ -555,15 +554,15 @@ class _StudentAttendancePageState extends State<StudentAttendancePage> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'present':
-        return Colors.green;
+        return AppTheme.successColor;
       case 'absent':
-        return Colors.red;
+        return AppTheme.errorColor;
       case 'late':
-        return Colors.orange;
+        return AppTheme.warningColor;
       case 'excused':
-        return Colors.blue;
+        return AppTheme.infoColor;
       default:
-        return Colors.grey;
+        return AppTheme.textTertiary;
     }
   }
 

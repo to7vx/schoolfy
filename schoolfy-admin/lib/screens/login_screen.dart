@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -234,21 +235,21 @@ class _LoginScreenState extends State<LoginScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: Colors.red.withValues(alpha: 0.1),
+                                  color: AppTheme.errorColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: Colors.red.withValues(alpha: 0.3)),
+                                      color: AppTheme.errorColor.withValues(alpha: 0.3)),
                                 ),
                                 child: Row(
                                   children: [
                                     const Icon(Icons.error_outline,
-                                        color: Colors.redAccent, size: 18),
+                                        color: AppTheme.errorColor, size: 18),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
                                         _errorMessage!,
                                         style: const TextStyle(
-                                            color: Colors.redAccent,
+                                            color: AppTheme.errorColor,
                                             fontSize: 13),
                                       ),
                                     ),
@@ -421,15 +422,15 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.red.withValues(alpha: 0.7)),
+          borderSide: BorderSide(color: AppTheme.errorColor.withValues(alpha: 0.7)),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: Colors.redAccent, width: 1.5),
+              const BorderSide(color: AppTheme.errorColor, width: 1.5),
         ),
         errorStyle:
-            const TextStyle(color: Colors.redAccent, fontSize: 12),
+            const TextStyle(color: AppTheme.errorColor, fontSize: 12),
       ),
       validator: validator,
     );
@@ -563,7 +564,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Password reset email sent!'),
-                        backgroundColor: Colors.green,
+                        backgroundColor: AppTheme.successColor,
                       ),
                     );
                   }
@@ -572,7 +573,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Error: $e'),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppTheme.errorColor,
                       ),
                     );
                   }

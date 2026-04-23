@@ -70,7 +70,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error loading grades: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -179,8 +179,8 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
                   ),
                   filled: true,
                   fillColor: Theme.of(context).brightness == Brightness.dark 
-                      ? Colors.grey[800] 
-                      : Colors.grey[50],
+                      ? AppTheme.cardColor 
+                      : const Color(0xFFF8FAFC),
                 ),
                 onChanged: (value) {
                   setState(() {
@@ -201,7 +201,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
                 BoxShadow(
                   color: Theme.of(context).brightness == Brightness.dark 
                       ? Colors.black.withOpacity(0.3)
-                      : Colors.grey.withOpacity(0.1),
+                      : AppTheme.textMuted.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 3,
                   offset: const Offset(0, 1),
@@ -327,8 +327,8 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
       decoration: BoxDecoration(
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.grey[700]! 
-              : Colors.grey[300]!
+              ? const Color(0xFF374151) 
+              : const Color(0xFFD1D5DB)
         ),
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).cardColor,
@@ -395,8 +395,8 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.grey[800] 
-                        : Colors.grey[50],
+                        ? AppTheme.cardColor 
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -415,7 +415,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
                         icon: const Icon(Icons.publish, size: 16),
                         label: const Text('Publish'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppTheme.successColor,
                           foregroundColor: Colors.white,
                         ),
                       ),
@@ -438,7 +438,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
                       icon: const Icon(Icons.delete, size: 16),
                       label: const Text('Delete'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
+                        foregroundColor: AppTheme.errorColor,
                       ),
                     ),
                   ],
@@ -452,7 +452,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
   }
 
   Widget _buildStatusChip(String priority, bool isDraft) {
-    final color = isDraft ? Colors.orange : _getPriorityColor(priority);
+    final color = isDraft ? AppTheme.warningColor : _getPriorityColor(priority);
     final text = isDraft ? 'DRAFT' : priority.toUpperCase();
     
     return Container(
@@ -475,7 +475,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
 
   Widget _buildRecipientChip(String recipientType, List<String> targetGrades) {
     String text;
-    Color color = Colors.blue;
+    Color color = AppTheme.infoColor;
     
     switch (recipientType) {
       case 'grade':
@@ -509,13 +509,13 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
   Color _getPriorityColor(String priority) {
     switch (priority) {
       case 'high':
-        return Colors.red;
+        return AppTheme.errorColor;
       case 'medium':
-        return Colors.orange;
+        return AppTheme.warningColor;
       case 'low':
-        return Colors.blue;
+        return AppTheme.infoColor;
       default:
-        return Colors.green;
+        return AppTheme.successColor;
     }
   }
 
@@ -708,7 +708,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
@@ -718,7 +718,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select at least one grade'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
@@ -760,7 +760,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
                       ? 'Announcement saved as draft'
                       : 'Announcement published and sent to recipients'
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -769,7 +769,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving announcement: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -807,7 +807,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No guardian users found to send notifications to'),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppTheme.warningColor,
             ),
           );
         }
@@ -842,7 +842,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Notifications sent to ${recipientIds.length} guardians'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -851,7 +851,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error sending notifications: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -875,7 +875,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Announcement published and sent to recipients'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -884,7 +884,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error publishing announcement: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -905,7 +905,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -922,7 +922,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Announcement deleted successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.successColor,
             ),
           );
         }
@@ -931,7 +931,7 @@ class _AnnouncementManagementScreenState extends State<AnnouncementManagementScr
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error deleting announcement: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
             ),
           );
         }

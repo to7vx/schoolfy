@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:csv/csv.dart';
 import 'dart:convert';
@@ -200,7 +200,7 @@ class _PickupHistoryScreenState extends State<PickupHistoryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        const Icon(Icons.error_outline, size: 64, color: AppTheme.errorColor),
                         const SizedBox(height: 16),
                         Text('Error: ${snapshot.error}'),
                       ],
@@ -230,27 +230,27 @@ class _PickupHistoryScreenState extends State<PickupHistoryScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: const Color(0xFFF3F4F6),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.history,
                             size: 64,
-                            color: Colors.grey,
+                            color: AppTheme.textMuted,
                           ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No pickup history found',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.grey[600],
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Try adjusting your filters or date range.',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[500],
+                            color: AppTheme.textMuted,
                           ),
                         ),
                       ],
@@ -317,27 +317,27 @@ class _PickupHistoryScreenState extends State<PickupHistoryScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                Icon(Icons.calendar_today, size: 14, color: AppTheme.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   date,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                Icon(Icons.access_time, size: 14, color: AppTheme.textSecondary),
                 const SizedBox(width: 4),
                 Text(
                   completedTime != null 
                       ? '${completedTime.hour.toString().padLeft(2, '0')}:${completedTime.minute.toString().padLeft(2, '0')}'
                       : 'N/A',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                 ),
               ],
             ),
             const SizedBox(height: 2),
             Text(
               'Completed by: $completedBy',
-              style: TextStyle(color: Colors.grey[600], fontSize: 11),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
             ),
           ],
         ),
@@ -469,7 +469,7 @@ class _PickupHistoryScreenState extends State<PickupHistoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Export failed: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }

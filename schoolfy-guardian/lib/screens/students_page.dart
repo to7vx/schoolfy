@@ -31,7 +31,6 @@ class _StudentsPageState extends State<StudentsPage> {
     final l10n = AppLocalizations.of(context);
     
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
         slivers: [
           // Modern App Bar
@@ -121,7 +120,7 @@ class _StudentsPageState extends State<StudentsPage> {
           // Search and Filter Section
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               padding: const EdgeInsets.all(AppTheme.spacingL),
               child: Column(
                 children: [
@@ -161,7 +160,6 @@ class _StudentsPageState extends State<StudentsPage> {
                                 borderSide: BorderSide.none,
                               ),
                               filled: true,
-                              fillColor: Colors.white,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: AppTheme.spacingM,
                                 vertical: AppTheme.spacingM,
@@ -313,7 +311,7 @@ class _StudentsPageState extends State<StudentsPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.error, size: 48, color: Colors.red),
+                              Icon(Icons.error, size: 48, color: AppTheme.errorColor),
                               const SizedBox(height: 16),
                               Text('Error loading students: ${studentSnapshot.error}'),
                             ],
@@ -477,7 +475,7 @@ class _StudentsPageState extends State<StudentsPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusXL),
         boxShadow: AppTheme.softShadow,
       ),
@@ -668,13 +666,13 @@ class _StudentsPageState extends State<StudentsPage> {
       case 'present':
         return AppTheme.successColor;
       case 'absent':
-        return Colors.red;
+        return AppTheme.errorColor;
       case 'late':
         return AppTheme.warningColor;
       case 'excused':
         return AppTheme.infoColor;
       default:
-        return Colors.grey;
+        return AppTheme.textTertiary;
     }
   }
 
@@ -725,9 +723,9 @@ class _StudentsPageState extends State<StudentsPage> {
   Widget _buildStudentDetailsSheet(BuildContext context, Map<String, dynamic> student) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -737,7 +735,7 @@ class _StudentsPageState extends State<StudentsPage> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppTheme.dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -847,7 +845,7 @@ class _StudentsPageState extends State<StudentsPage> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppTheme.textPrimary,
           ),
         ),
         const SizedBox(height: 12),

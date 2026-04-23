@@ -19,11 +19,11 @@ class AppTheme {
   static const Color cardColor = Color(0xFFFFFFFF);
   static const Color dividerColor = Color(0xFFE5E7EB);
   
-  // Dark Theme Colors
-  static const Color darkBackgroundColor = Color(0xFF0F0F23);
-  static const Color darkSurfaceColor = Color(0xFF1A1A2E);
-  static const Color darkCardColor = Color(0xFF16213E);
-  static const Color darkDividerColor = Color(0xFF374151);
+  // Dark Theme Colors (unified with admin dark system)
+  static const Color darkBackgroundColor = Color(0xFF080B14);
+  static const Color darkSurfaceColor = Color(0xFF0D1526);
+  static const Color darkCardColor = Color(0xFF111B2E);
+  static const Color darkDividerColor = Color(0xFF1E3A5F);
   
   // Text Colors
   static const Color textPrimary = Color(0xFF111827);
@@ -64,7 +64,6 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         surface: surfaceColor,
-        background: backgroundColor,
         error: errorColor,
       ),
       
@@ -141,7 +140,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: const Color(0xFFF8FAFC),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -283,7 +282,6 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         surface: darkSurfaceColor,
-        background: darkBackgroundColor,
         error: errorColor,
       ),
       

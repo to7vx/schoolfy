@@ -543,13 +543,13 @@ class _HomePageState extends State<HomePage> {
                             .snapshots(),
                         builder: (context, snapshot) {
                           String status = l10n?.notMarked ?? 'Not Marked';
-                          Color statusColor = Colors.grey;
+                          Color statusColor = AppTheme.textTertiary;
                           IconData statusIcon = Icons.help_rounded;
-                          
+
                           if (snapshot.hasData && snapshot.data!.exists) {
                             final data = snapshot.data!.data() as Map<String, dynamic>?;
                             final attendanceStatus = data?['status'] ?? 'unmarked';
-                            
+
                             switch (attendanceStatus) {
                               case 'present':
                                 status = l10n?.present ?? 'Present';
@@ -558,7 +558,7 @@ class _HomePageState extends State<HomePage> {
                                 break;
                               case 'absent':
                                 status = l10n?.absent ?? 'Absent';
-                                statusColor = Colors.red;
+                                statusColor = AppTheme.errorColor;
                                 statusIcon = Icons.cancel_rounded;
                                 break;
                               case 'late':
@@ -700,7 +700,7 @@ class _HomePageState extends State<HomePage> {
         icon: Icons.directions_bus,
         label: 'No Transport',
         value: 'None',
-        color: Colors.grey,
+        color: AppTheme.textTertiary,
       );
     }
 
@@ -715,7 +715,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icons.directions_bus,
             label: 'Loading...',
             value: 'None',
-            color: Colors.grey,
+            color: AppTheme.textTertiary,
           );
         }
 
@@ -724,7 +724,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icons.directions_bus,
             label: 'Error',
             value: 'None',
-            color: Colors.red,
+            color: AppTheme.errorColor,
           );
         }
 
@@ -733,7 +733,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icons.directions_bus,
             label: 'No Transport',
             value: 'None',
-            color: Colors.grey,
+            color: AppTheme.textTertiary,
           );
         }
 
@@ -745,7 +745,7 @@ class _HomePageState extends State<HomePage> {
             icon: Icons.directions_bus,
             label: 'No Transport',
             value: 'None',
-            color: Colors.grey,
+            color: AppTheme.textTertiary,
           );
         }
 
@@ -761,30 +761,30 @@ class _HomePageState extends State<HomePage> {
             String busDisplayText = 'None';
 
             if (busSnapshot.connectionState == ConnectionState.waiting) {
-              cardColor = Colors.grey;
+              cardColor = AppTheme.textTertiary;
               statusText = 'Loading...';
               iconData = Icons.directions_bus;
             } else if (busSnapshot.hasError) {
-              cardColor = Colors.red;
+              cardColor = AppTheme.errorColor;
               statusText = 'Error';
               iconData = Icons.directions_bus;
             } else if (!busSnapshot.hasData || !busSnapshot.data!.exists) {
-              cardColor = Colors.grey;
+              cardColor = AppTheme.textTertiary;
               statusText = 'No Transport';
               iconData = Icons.directions_bus;
             } else {
               final busData = busSnapshot.data!.data() as Map<String, dynamic>?;
               if (busData == null) {
-                cardColor = Colors.grey;
+                cardColor = AppTheme.textTertiary;
                 statusText = 'No Transport';
                 iconData = Icons.directions_bus;
               } else {
                 final routeStatus = busData['routeStatus'] ?? 'idle';
                 final busNumber = busData['busNumber'] ?? 'Unknown';
                 busDisplayText = 'Bus $busNumber';
-                
+
                 if (routeStatus == 'on_route') {
-                  cardColor = Colors.green;
+                  cardColor = AppTheme.successColor;
                   statusText = 'On Route';
                   iconData = Icons.directions_bus;
                 } else {
@@ -846,11 +846,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildStudentDetailsSheet(BuildContext context, Map<String, dynamic> student) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBg = isDark ? AppTheme.darkSurfaceColor : Colors.white;
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: sheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -860,7 +862,7 @@ class _HomePageState extends State<HomePage> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppTheme.dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -869,15 +871,21 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.deepPurple,
-                  child: Text(
-                    _getInitials(student['studentName'] ?? ''),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(student['studentName'] ?? ''),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -897,7 +905,7 @@ class _HomePageState extends State<HomePage> {
                         'Grade ${student['grade'] ?? ''}',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: AppTheme.textSecondary,
                         ),
                       ),
                     ],
@@ -954,14 +962,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildNotificationsSheet(BuildContext context) {
-    // TODO: Fetch real notifications from Firebase
     final notifications = <Map<String, dynamic>>[];
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetBg = isDark ? AppTheme.darkSurfaceColor : Colors.white;
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: sheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -971,7 +979,7 @@ class _HomePageState extends State<HomePage> {
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppTheme.dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1250,7 +1258,7 @@ class _HomePageState extends State<HomePage> {
               label,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppTheme.textSecondary,
               ),
             ),
           ),
@@ -1277,7 +1285,7 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pickup request already sent for this student'),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppTheme.warningColor,
           ),
         );
       }
@@ -1318,8 +1326,8 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${l10n?.pickupRequestSent ?? 'Pickup request sent for'} ${student['studentName']}'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2), // Auto dismiss after 2 seconds
+            backgroundColor: AppTheme.successColor,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -1343,7 +1351,7 @@ class _HomePageState extends State<HomePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send pickup request: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }

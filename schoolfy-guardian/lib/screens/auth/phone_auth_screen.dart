@@ -113,7 +113,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -215,19 +215,19 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.red[50],
+                                color: const Color(0xFFEF4444).withOpacity(0.08),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.red[200]!),
+                                border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red[600], size: 20),
+                                  const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _error!,
-                                      style: TextStyle(
-                                        color: Colors.red[700],
+                                      style: const TextStyle(
+                                        color: Color(0xFFEF4444),
                                         fontSize: 14,
                                       ),
                                     ),
@@ -298,7 +298,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
                                 Text(
                                   'Didn\'t receive code? ',
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: const Color(0xFF6B7280),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -331,7 +331,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
                             'By continuing, you agree to our Terms of Service\nand Privacy Policy',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: const Color(0xFF6B7280),
                               fontSize: 12,
                             ),
                           ),
@@ -351,9 +351,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
   Widget _buildPhoneInputField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: TextField(
         controller: _phoneController,
@@ -365,7 +365,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
           prefixIcon: const Icon(Icons.phone_outlined),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle: TextStyle(color: const Color(0xFF6B7280)),
         ),
       ),
     );
@@ -374,9 +374,9 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
   Widget _buildCodeInputField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: TextField(
         controller: _smsController,
@@ -390,7 +390,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen>
           prefixIcon: const Icon(Icons.security_outlined),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle: TextStyle(color: const Color(0xFF6B7280)),
           counterText: '',
         ),
       ),

@@ -30,7 +30,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final l10n = AppLocalizations.of(context);
     
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
         slivers: [
           // Modern App Bar
@@ -123,7 +122,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Container(
               margin: const EdgeInsets.all(AppTheme.spacingL),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppTheme.radiusXL),
                 boxShadow: AppTheme.softShadow,
               ),
@@ -388,7 +387,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 Container(
                   margin: const EdgeInsets.only(bottom: AppTheme.spacingXXL),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppTheme.radiusXL),
                     boxShadow: AppTheme.softShadow,
                   ),
@@ -405,12 +404,12 @@ class _SettingsPageState extends State<SettingsPage> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
+                                color: AppTheme.errorColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
                                 Icons.logout_rounded,
-                                color: Colors.red,
+                                color: AppTheme.errorColor,
                               ),
                             ),
                             const SizedBox(width: AppTheme.spacingL),
@@ -423,14 +422,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.red,
+                                      color: AppTheme.errorColor,
                                     ),
                                   ),
                                   Text(
                                     l10n?.signOutDescription ?? 'Sign out of your account',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Colors.red,
+                                      color: AppTheme.errorColor,
                                     ),
                                   ),
                                 ],
@@ -439,7 +438,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             const Icon(
                               Icons.arrow_forward_ios_rounded,
                               size: 16,
-                              color: Colors.red,
+                              color: AppTheme.errorColor,
                             ),
                           ],
                         ),
@@ -458,7 +457,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSettingsSection(String title, IconData icon, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusXL),
         boxShadow: AppTheme.softShadow,
       ),
@@ -538,7 +537,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildTapTile(String title, String subtitle, IconData icon, VoidCallback onTap, {bool isDestructive = false}) {
-    final color = isDestructive ? Colors.red : AppTheme.textPrimary;
+    final color = isDestructive ? AppTheme.errorColor : AppTheme.textPrimary;
     
     return Material(
       color: Colors.transparent,
@@ -573,7 +572,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDestructive ? Colors.red.withOpacity(0.7) : AppTheme.textSecondary,
+                        color: isDestructive ? AppTheme.errorColor.withOpacity(0.6) : AppTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -755,7 +754,7 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               Icon(
                 Icons.logout_rounded,
-                color: Colors.red,
+                color: AppTheme.errorColor,
                 size: 28,
               ),
               const SizedBox(width: 12),
@@ -783,7 +782,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 FirebaseAuth.instance.signOut();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.errorColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -897,7 +896,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to update profile: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }

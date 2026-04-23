@@ -24,7 +24,6 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
         slivers: [
           // Modern App Bar
@@ -113,7 +112,7 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
           // Student Selection
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               padding: const EdgeInsets.all(AppTheme.spacingL),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,10 +187,10 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
                                   width: 140,
                                   padding: const EdgeInsets.all(AppTheme.spacingM),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? AppTheme.primaryColor : Colors.white,
+                                    color: isSelected ? AppTheme.primaryColor : Theme.of(context).colorScheme.surface,
                                     borderRadius: BorderRadius.circular(AppTheme.radiusL),
                                     border: Border.all(
-                                      color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                                      color: isSelected ? AppTheme.primaryColor : AppTheme.dividerColor,
                                       width: 2,
                                     ),
                                     boxShadow: isSelected ? AppTheme.softShadow : [],
@@ -259,7 +258,7 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
                 margin: const EdgeInsets.all(AppTheme.spacingL),
                 padding: const EdgeInsets.all(AppTheme.spacingL),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppTheme.radiusXL),
                   boxShadow: AppTheme.softShadow,
                 ),
@@ -415,7 +414,7 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingXXL),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusXL),
         boxShadow: AppTheme.softShadow,
       ),
@@ -463,7 +462,7 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusL),
         boxShadow: AppTheme.softShadow,
       ),
@@ -531,7 +530,7 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
               value: 'remove',
               child: Row(
                 children: [
-                  Icon(Icons.delete_rounded, color: Colors.red),
+                  Icon(Icons.delete_rounded, color: AppTheme.errorColor),
                   const SizedBox(width: 8),
                   const Text('Remove Access'),
                 ],
@@ -587,7 +586,7 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send invitation: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -617,12 +616,12 @@ class _AuthorizedGuardiansPageState extends State<AuthorizedGuardiansPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Guardian access removed'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppTheme.errorColor,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Remove'),

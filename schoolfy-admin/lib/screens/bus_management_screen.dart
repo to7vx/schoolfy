@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -159,8 +159,8 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                         ),
                         filled: true,
                         fillColor: Theme.of(context).brightness == Brightness.dark 
-                            ? Colors.grey[800] 
-                            : Colors.grey[50],
+                            ? AppTheme.cardColor 
+                            : const Color(0xFFF8FAFC),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -181,8 +181,8 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                         ),
                         filled: true,
                         fillColor: Theme.of(context).brightness == Brightness.dark 
-                            ? Colors.grey[800] 
-                            : Colors.grey[50],
+                            ? AppTheme.cardColor 
+                            : const Color(0xFFF8FAFC),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'all', child: Text('All Buses')),
@@ -212,7 +212,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                 BoxShadow(
                   color: Theme.of(context).brightness == Brightness.dark 
                       ? Colors.black.withOpacity(0.3)
-                      : Colors.grey.withOpacity(0.1),
+                      : AppTheme.textMuted.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 3,
                   offset: const Offset(0, 1),
@@ -372,16 +372,16 @@ class _BusManagementScreenState extends State<BusManagementScreen>
 
     final utilizationPercentage = capacity > 0 ? (assignedStudents.length / capacity * 100) : 0;
     final statusColor = isActive 
-        ? (assignedStudents.length >= capacity ? Colors.red : Colors.green)
-        : Colors.grey;
+        ? (assignedStudents.length >= capacity ? AppTheme.errorColor : AppTheme.successColor)
+        : AppTheme.textMuted;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.grey[700]! 
-              : Colors.grey[300]!
+              ? const Color(0xFF374151) 
+              : const Color(0xFFD1D5DB)
         ),
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).cardColor,
@@ -450,8 +450,8 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.grey[800] 
-                        : Colors.grey[50],
+                        ? AppTheme.cardColor 
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -496,7 +496,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                       icon: const Icon(Icons.delete, size: 16),
                       label: const Text('Delete'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
+                        foregroundColor: AppTheme.errorColor,
                       ),
                     ),
                   ],
@@ -537,7 +537,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
   }
 
   Widget _buildStatusChip(bool isActive) {
-    final color = isActive ? Colors.green : Colors.grey;
+    final color = isActive ? AppTheme.successColor : AppTheme.textMuted;
     final text = isActive ? 'ACTIVE' : 'INACTIVE';
     
     return Container(
@@ -560,7 +560,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
 
   Widget _buildCapacityChip(int assigned, int capacity) {
     final isFull = assigned >= capacity;
-    final color = isFull ? Colors.red : Colors.blue;
+    final color = isFull ? AppTheme.errorColor : AppTheme.infoColor;
     final text = '$assigned/$capacity';
     
     return Container(
@@ -583,7 +583,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
 
   Widget _buildRouteStatusChip(String routeStatus) {
     final isOnRoute = routeStatus == 'on_route';
-    final color = isOnRoute ? Colors.orange : Colors.grey;
+    final color = isOnRoute ? AppTheme.warningColor : AppTheme.textMuted;
     final text = isOnRoute ? 'ON ROUTE' : 'IDLE';
     final icon = isOnRoute ? Icons.directions_bus : Icons.pause;
     
@@ -691,8 +691,8 @@ class _BusManagementScreenState extends State<BusManagementScreen>
       decoration: BoxDecoration(
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark 
-              ? Colors.grey[700]! 
-              : Colors.grey[300]!
+              ? const Color(0xFF374151) 
+              : const Color(0xFFD1D5DB)
         ),
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).cardColor,
@@ -721,12 +721,12 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                         final busData = snapshot.data!.data() as Map<String, dynamic>;
                         return Chip(
                           label: Text('Bus ${busData['busNumber']}'),
-                          backgroundColor: Colors.green.withOpacity(0.1),
+                          backgroundColor: AppTheme.successColor.withOpacity(0.1),
                         );
                       }
                       return const Chip(
                         label: Text('Unknown Bus'),
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppTheme.errorColor,
                       );
                     },
                   ),
@@ -754,7 +754,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                         value: 'unassign',
                         child: Row(
                           children: [
-                            Icon(Icons.remove_circle, size: 18, color: Colors.red),
+                            Icon(Icons.remove_circle, size: 18, color: AppTheme.errorColor),
                             SizedBox(width: 8),
                             Text('Unassign'),
                           ],
@@ -888,7 +888,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
@@ -899,7 +899,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid capacity'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.errorColor,
         ),
       );
       return;
@@ -931,7 +931,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(editId != null ? 'Bus updated successfully' : 'Bus added successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -940,7 +940,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving bus: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -999,12 +999,12 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: AppTheme.infoColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info, color: Colors.blue),
+                            const Icon(Icons.info, color: AppTheme.infoColor),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -1023,11 +1023,11 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                                Icon(Icons.people_outline, size: 64, color: AppTheme.textMuted),
                                 SizedBox(height: 16),
                                 Text(
                                   'No unassigned students available',
-                                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                                  style: TextStyle(fontSize: 16, color: AppTheme.textMuted),
                                 ),
                               ],
                             ),
@@ -1061,7 +1061,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(
                                               content: Text('Bus capacity reached'),
-                                              backgroundColor: Colors.orange,
+                                              backgroundColor: AppTheme.warningColor,
                                             ),
                                           );
                                         }
@@ -1128,7 +1128,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Successfully assigned ${_selectedStudents.length} students to Bus #${busData['busNumber']}'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -1139,7 +1139,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error assigning students: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1217,11 +1217,11 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: isCurrentBus ? Colors.blue : Colors.grey.withOpacity(0.3),
+                            color: isCurrentBus ? AppTheme.infoColor : AppTheme.textMuted.withOpacity(0.3),
                             width: isCurrentBus ? 2 : 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
-                          color: isCurrentBus ? Colors.blue.withOpacity(0.05) : null,
+                          color: isCurrentBus ? AppTheme.infoColor.withOpacity(0.05) : null,
                         ),
                         child: ListTile(
                           title: Row(
@@ -1232,7 +1232,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue,
+                                    color: AppTheme.infoColor,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Text(
@@ -1280,7 +1280,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Student bus assignment updated successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
           ),
         );
       }
@@ -1290,7 +1290,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating assignment: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -1311,7 +1311,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Unassign'),
@@ -1330,7 +1330,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Student unassigned successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.successColor,
             ),
           );
         }
@@ -1340,7 +1340,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error unassigning student: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
             ),
           );
         }
@@ -1362,7 +1362,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -1398,7 +1398,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Bus deleted successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppTheme.successColor,
             ),
           );
         }
@@ -1408,7 +1408,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error deleting bus: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
             ),
           );
         }
@@ -1434,7 +1434,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
       ),
       label: Text(isOnRoute ? 'End Route' : 'Start Route'),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isOnRoute ? Colors.red : Colors.green,
+        backgroundColor: isOnRoute ? AppTheme.errorColor : AppTheme.successColor,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
@@ -1470,7 +1470,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
                   ? 'Bus is now on route' 
                   : 'Bus route ended'
             ),
-            backgroundColor: newStatus == 'on_route' ? Colors.green : Colors.blue,
+            backgroundColor: newStatus == 'on_route' ? AppTheme.successColor : AppTheme.infoColor,
           ),
         );
       }
@@ -1480,7 +1480,7 @@ class _BusManagementScreenState extends State<BusManagementScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating route status: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
