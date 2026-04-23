@@ -29,14 +29,17 @@ class _LoginScreenState extends State<LoginScreen>
   late Animation<double> _slideAnim;
   late Animation<double> _glowAnim;
 
-  static const _bg = Color(0xFF080B14);
-  static const _card = Color(0xFF0D1526);
-  static const _fieldBg = Color(0xFF0A1628);
-  static const _border = Color(0xFF1E3A5F);
-  static const _accent = Color(0xFF3B82F6);
+  // Theme-reactive colors — updated in didChangeDependencies
+  Color _bg         = const Color(0xFF080B14);
+  Color _card       = const Color(0xFF0D1526);
+  Color _fieldBg    = const Color(0xFF0A1628);
+  Color _border     = const Color(0xFF1E3A5F);
+  Color _textPrimary = Colors.white;
+  Color _textMuted  = const Color(0xFF8B9BB4);
+
+  // Accent stays the same in both modes
+  static const _accent    = Color(0xFF3B82F6);
   static const _accentDim = Color(0xFF1D4ED8);
-  static const _textPrimary = Colors.white;
-  static const _textMuted = Color(0xFF8B9BB4);
 
   @override
   void initState() {
@@ -55,6 +58,27 @@ class _LoginScreenState extends State<LoginScreen>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeOutCubic),
     );
     _glowAnim = CurvedAnimation(parent: _glowController, curve: Curves.easeInOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (isDark) {
+      _bg          = const Color(0xFF080B14);
+      _card        = const Color(0xFF0D1526);
+      _fieldBg     = const Color(0xFF0A1628);
+      _border      = const Color(0xFF1E3A5F);
+      _textPrimary = Colors.white;
+      _textMuted   = const Color(0xFF8B9BB4);
+    } else {
+      _bg          = const Color(0xFFF0F4FF);
+      _card        = Colors.white;
+      _fieldBg     = const Color(0xFFF8FAFF);
+      _border      = const Color(0xFFD1DCF0);
+      _textPrimary = const Color(0xFF0F172A);
+      _textMuted   = const Color(0xFF64748B);
+    }
   }
 
   @override
@@ -127,8 +151,9 @@ class _LoginScreenState extends State<LoginScreen>
                               blurRadius: 50,
                               spreadRadius: -4,
                             ),
-                            const BoxShadow(
-                              color: Colors.black54,
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                  alpha: Theme.of(context).brightness == Brightness.dark ? 0.35 : 0.08),
                               blurRadius: 30,
                             ),
                           ],
@@ -143,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen>
                           children: [
                             _buildLogo(),
                             const SizedBox(height: 24),
-                            const Center(
+                            Center(
                               child: Text(
                                 'Schoolfy Admin',
                                 style: TextStyle(
@@ -158,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen>
                             Center(
                               child: Text(
                                 l10n.dashboard,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 14, color: _textMuted),
                               ),
                             ),
@@ -270,11 +295,11 @@ class _LoginScreenState extends State<LoginScreen>
                                       Provider.of<LocaleProvider>(context,
                                               listen: false)
                                           .toggleLocale(),
-                                  icon: const Icon(Icons.language,
+                                  icon: Icon(Icons.language,
                                       size: 15, color: _textMuted),
                                   label: Text(
                                     isArabic ? l10n.english : l10n.arabic,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: _textMuted, fontSize: 13),
                                   ),
                                   style: TextButton.styleFrom(
@@ -380,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildLabel(String text) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 13, fontWeight: FontWeight.w500, color: _textMuted),
       );
 
@@ -397,12 +422,12 @@ class _LoginScreenState extends State<LoginScreen>
       controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: TextStyle(color: _textPrimary, fontSize: 15),
       cursorColor: _accent,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF3D4F6A), fontSize: 14),
-        prefixIcon: Icon(icon, color: const Color(0xFF3D5A80), size: 20),
+        hintStyle: TextStyle(color: _textMuted.withValues(alpha: 0.6), fontSize: 14),
+        prefixIcon: Icon(icon, color: _textMuted, size: 20),
         suffixIcon: suffix,
         filled: true,
         fillColor: _fieldBg,
@@ -410,11 +435,11 @@ class _LoginScreenState extends State<LoginScreen>
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: _border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: _border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -452,8 +477,8 @@ class _LoginScreenState extends State<LoginScreen>
                 gradient: _isLoading
                     ? LinearGradient(
                         colors: [
-                          Colors.grey.shade800,
-                          Colors.grey.shade700
+                          _border,
+                          _border.withValues(alpha: 0.7),
                         ],
                       )
                     : const LinearGradient(
@@ -509,14 +534,14 @@ class _LoginScreenState extends State<LoginScreen>
         backgroundColor: _card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: _border),
+          side: BorderSide(color: _border),
         ),
-        title: const Text('Reset Password',
+        title: Text('Reset Password',
             style: TextStyle(color: _textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Enter your email to receive reset instructions.',
               style: TextStyle(color: _textMuted, fontSize: 14),
             ),
@@ -524,21 +549,21 @@ class _LoginScreenState extends State<LoginScreen>
             TextFormField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: _textPrimary),
               cursorColor: _accent,
               decoration: InputDecoration(
                 labelText: l10n.email,
-                labelStyle: const TextStyle(color: _textMuted),
-                prefixIcon: const Icon(Icons.email_outlined,
-                    color: Color(0xFF3D5A80), size: 20),
+                labelStyle: TextStyle(color: _textMuted),
+                prefixIcon: Icon(Icons.email_outlined,
+                    color: _textMuted, size: 20),
                 filled: true,
                 fillColor: _fieldBg,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _border)),
+                    borderSide: BorderSide(color: _border)),
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: _border)),
+                    borderSide: BorderSide(color: _border)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide:
@@ -551,7 +576,7 @@ class _LoginScreenState extends State<LoginScreen>
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(l10n.cancel,
-                style: const TextStyle(color: _textMuted)),
+                style: TextStyle(color: _textMuted)),
           ),
           ElevatedButton(
             onPressed: () async {

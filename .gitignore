@@ -84,6 +84,3 @@ pglite-debug.log
 # IDE files
 .vscode/
 .idea/
-
-# Claude Code
-.claude/
