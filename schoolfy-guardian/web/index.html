@@ -163,15 +163,6 @@
       overflow: hidden;
     }
 
-    /* On actual mobile screens — full screen, no frame */
-    @media (max-width: 480px), (max-height: 900px) {
-      html, body { display: block; background: #000; }
-      #layout { display: block; }
-      #hint-box { display: none; }
-      #phone-frame { width: 100%; height: 100vh; border-radius: 0; box-shadow: none; }
-      #phone-frame::before { display: none; }
-      #flutter-target { width: 100%; height: 100vh; }
-    }
   </style>
 </head>
 <body>
