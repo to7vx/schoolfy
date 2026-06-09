@@ -37,6 +37,9 @@
       display: flex;
       align-items: center;
       gap: 36px;
+      transform: scale(var(--demo-scale, 1));
+      transform-origin: center center;
+      will-change: transform;
     }
 
     /* ── Hint card ── */
@@ -200,6 +203,26 @@
       });
     }
 
+    const layout = document.getElementById('layout');
+
+    function updateDemoScale() {
+      if (!layout) return;
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const layoutWidth = layout.offsetWidth;
+      const layoutHeight = layout.offsetHeight;
+      const padding = 32;
+
+      const scale = Math.min(
+        1,
+        (viewportWidth - padding) / layoutWidth,
+        (viewportHeight - padding) / layoutHeight,
+      );
+
+      layout.style.setProperty('--demo-scale', Math.max(scale, 0.4));
+    }
+
     function copyVal(el, text) {
       navigator.clipboard.writeText(text).then(() => {
         el.classList.add('copied');
@@ -212,6 +235,11 @@
         }, 1600);
       });
     }
+
+    window.addEventListener('resize', updateDemoScale);
+    window.addEventListener('orientationchange', updateDemoScale);
+    window.addEventListener('load', updateDemoScale);
+    updateDemoScale();
 
     // Flutter hostElement injection
     window._flutter = window._flutter || {};
